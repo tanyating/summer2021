@@ -10,6 +10,11 @@
 
 \usepackage{natbib}
 \usepackage{graphicx}
+\usepackage{amsmath}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+
+\DeclareMathOperator{\erf}{erf}
 
 \begin{document}
 
@@ -22,17 +27,17 @@ This project is about...
 \section{Notes}
 
 \subsection{\date{Jun 10th}}
-LDA (Linear Discriminant Analysis, $\vec{x}$ as input features, $y$ as output label): 
+LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output label): 
 \begin{itemize}
-    \item 1-D ($x \in R$) false positive and false negative rates (no prior or unbiased):
+    \item 1-D ($x \in \mathbf{R}$) false positive and false negative rates (no prior or unbiased):
 \begin{enumerate}
     \item Model Gaussian PDF for each class $k \in \{1,..,K\}$:
-    $p(x|y=k) = \frac{1}{\sqrt{2\pi}\sigma} e^{-\frac{{(x-\mu_k)}^2}{2\sigma^2}}$,\\
+    $p(x|l=k) = \frac{1}{\sqrt{2\pi}\sigma} e^{-\frac{{(x-\mu_k)}^2}{2\sigma^2}}$,\\
     given $\sigma^2=\frac{\sum_{i=1}^{i=N} {(x_i-\mu_i)}^2}{N}$ and $\mu_k = \frac{\sum_{i=1}^{i=N_k} x_i}{N_k}$ from N training data $x_i$ with labels. 
-    \item Assume two classes with $\mu_1 = 0$ (no signal) and $\mu_2 = a$ (signal) with same noise $\sigma$. Find decision boundary between the 2 classes to be $x=\frac{a}{2}$ where $p(x=\frac{a}{2}|y=1) = p(x=\frac{a}{2}|y=2)$ (Maximum likelihood classifier).
+    \item Assume two classes with $\mu_1 = 0$ (no signal) and $\mu_2 = a$ (signal) with same noise $\sigma$. Find decision boundary between the 2 classes to be $x=\frac{a}{2}$ where $p(x=\frac{a}{2}|l=1) = p(x=\frac{a}{2}|l=2)$ (Maximum likelihood classifier).
     \item Detection (prediction) of some $x$: \\
-    Maximize likelihood: if $p(x|y=1) >= p(x|y=2)$, predict $y=1$ (no signal), else $y=2$ (signal).\\
-    Decision boundary (geometric): if $x <= \frac{a}{2}$, predict $y=1$ (no signal), else $y=2$ (signal).
+    Maximize likelihood: if $p(x|l=1) \ge p(x|l=2)$, predict $l=1$ (no signal), else $l=2$ (signal).\\
+    Decision boundary (geometric): if $x \leq \frac{a}{2}$, predict $l=1$ (no signal), else $l=2$ (signal).
     \item Error Matrix:
     
     \begin{tabular}{l|l|l}
@@ -40,38 +45,63 @@ LDA (Linear Discriminant Analysis, $\vec{x}$ as input features, $y$ as output la
     No Signal&Correct&False Positive\\\hline
     Signal&False Negative&Correct\\
     \end{tabular}
-    \item False Positive rate: the area of the right tail of label-1 (no signal) Gaussian PDF beyond decision boundary $x=b$.\\
-    False Positive rate $ = \int_{\frac{b}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} erf(\frac{b}{\sqrt{2}\sigma})$.\\
-    False Negative rate: the area of the left tail of label-2 (signal) Gaussian PDF below decision boundary $x=b$.\\
-    False Positive rate $ = \int_{-\infty}^{\frac{b-a}{\sigma}} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \int_{-\frac{b-a}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} erf(-\frac{b-a}{\sqrt{2}\sigma})$.
+    \item False Positive rate: the area of the right tail of label-1 (no signal) Gaussian PDF beyond decision boundary $x=b$.
+    \begin{equation}
+        fp = \int_{\frac{b}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} \erf(\frac{b}{\sqrt{2}\sigma})
+    \end{equation}
     
-    \item Since there is no prior (unbiased) and decision boundary $b=\frac{a}{2}$, False Negative rate $=$ False Positive rate $= \frac{1}{2} - \frac{1}{2} erf(\frac{a}{2\sqrt{2}\sigma})$.
+    False Negative rate: the area of the left tail of label-2 (signal) Gaussian PDF below decision boundary $x=b$.
+    
+    \begin{equation}
+        fn = \int_{-\infty}^{\frac{b-a}{\sigma}} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \int_{-\frac{b-a}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} \erf(-\frac{b-a}{\sqrt{2}\sigma})
+    \end{equation}
+    
+    
+    \item Since there is no prior (unbiased) and decision boundary $b=\frac{a}{2}$, False Negative rate $=$ False Positive rate $= \frac{1}{2} - \frac{1}{2} \erf(\frac{a}{2\sqrt{2}\sigma})$.
 \end{enumerate}
 
-\item Determine decision boundary (geometrically in any dimension d, $\vec{x} \in R^d$) with prior:
+\item Determine decision boundary (geometrically in any dimension d, $\mathbf{x} \in \mathbf{R}^d$) with prior:
 \begin{enumerate}
     \item Model multivariate Gaussian PDF for each class $k \in \{1,..,K\}$:\\
-    $p(\vec{x}|y=k) = \frac{1}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\vec{x}-\vec{\mu}_k)}^T \Sigma^{-1}{(\vec{x}-\vec{\mu}_k)}}$,\\
-    given $\Sigma$ is the (within-class) covariance matrix and $\vec{\mu}_k = \frac{\sum_{i=1}^{i=N_k} \vec{x}_i}{N_k}$ from N training data $\vec{x}_i$ with labels. 
-    \item Apply Bayesian Theorem to get posterior probability: $p(\vec{x}, y=k) = p(\vec{x}|y=k) \cdot p(y=k)$, given the prior $p(y=k) = \pi_k$.
-    \item Assume two classes with $\vec{\mu}_1 = \vec{0}$ (no signal) and $\vec{\mu}_2 = \vec{a}$ (signal $\vec{a} \in R^d$) with same covariance $\Sigma = \sigma^2 I$ (given noise $\sigma$ for each independent feature). Find decision boundary (hyperplane) between the 2 classes such that $p(\vec{x}|y=1)\cdot p(y=1) = p(\vec{x}|y=2)\cdot p(y=2)$. (Note: $\pi_1 = p(\vec{0})$, $\pi_2 = p(\vec{a})$)\\
-    $\frac{\pi_1}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\vec{x}-\vec{\mu}_1)}^T \Sigma^{-1}{(\vec{x}-\vec{\mu}_1)}} = \frac{\pi_2}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\vec{x}-\vec{\mu}_2)}^T \Sigma^{-1}{(\vec{x}-\vec{\mu}_2)}}$ \\\\
-    $2\log{\frac{\pi_1}{\pi_2}} = {(\vec{x}-\vec{\mu}_1)}^T \Sigma^{-1}{(\vec{x}-\vec{\mu}_1)} - {(\vec{x}-\vec{\mu}_2)}^T \Sigma^{-1}{(\vec{x}-\vec{\mu}_2)}$\\\\
-    $\vec{x}^T\vec{x} - {(\vec{x}-\vec{a})}^T(\vec{x}-\vec{a}) = 2\sigma^2\log{\frac{\pi_1}{\pi_2}}$\\\\
-    $\vec{x}^T\vec{a} = <\vec{x}, \vec{a}> = \frac{\lVert \vec{a} \rVert_2^2}{2} + \sigma^2\log{\frac{\pi_1}{\pi_2}}$
+    $p(\mathbf{x}|l=k) = \frac{1}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\mathbf{x}-\mathbf{\mu_k})}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu_k})}}$,\\
+    given $\Sigma$ is the (within-class) covariance matrix and $\mathbf{\mu_k} = \frac{\sum_{i=1}^{i=N_k} \mathbf{x}_i}{N_k}$ from N training data $\mathbf{x}_i$ with labels. 
+    \item Apply Bayesian Theorem to get posterior probability: $p(\mathbf{x}, l=k) = p(\mathbf{x}|l=k) \cdot p(l=k)$, given the prior $p(l=k) = \pi_k$.
+    \item Assume two classes with $\mathbf{\mu}_1 = \mathbf{0}$ (no signal) and $\mathbf{\mu}_2 = \mathbf{a}$ (signal $\mathbf{a} \in \mathbf{R}^d$) with same covariance $\Sigma = \sigma^2 I$ (given noise $\sigma$ for each independent feature). Find decision boundary (hyperplane) between the 2 classes such that $p(\mathbf{x}|l=1)\cdot p(l=1) = p(\mathbf{x}|l=2)\cdot p(l=2)$. (Note: $\pi_1 = p(\mathbf{0})$, $\pi_2 = p(\mathbf{a})$)\\
+   
+    $\frac{\pi_1}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\mathbf{x}-\mathbf{\mu}_1)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_1)}} = \frac{\pi_2}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\mathbf{x}-\mathbf{\mu}_2)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_2)}}$ \\\\
+    $2\log{\frac{\pi_1}{\pi_2}} = {(\mathbf{x}-\mathbf{\mu}_1)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_1)} - {(\mathbf{x}-\mathbf{\mu}_2)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_2)}$\\\\
+    $2\log{\frac{\pi_1}{\pi_2}} = \frac{1}{\sigma^2}{(\mathbf{x}-\mathbf{\mu}_1)}^T I^{-1}{(\mathbf{x}-\mathbf{\mu}_1)} - \frac{1}{\sigma^2}{(\mathbf{x}-\mathbf{\mu}_2)}^T I^{-1}{(\mathbf{x}-\mathbf{\mu}_2)}$ (replace $\Sigma$ with $\sigma^2 I$)\\\\
+    $\mathbf{x}^T\mathbf{x} - {(\mathbf{x}-\mathbf{a})}^T(\mathbf{x}-\mathbf{a}) = 2\sigma^2\log{\frac{\pi_1}{\pi_2}}$
+    \begin{equation}
+        \mathbf{x}^T\mathbf{a} = \langle \mathbf{x}, \mathbf{a} \rangle = \frac{\lVert \mathbf{a} \rVert_2^2}{2} + \sigma^2\log{\frac{\pi_1}{\pi_2}}
+    \end{equation}
+    
     \begin{itemize}
-        \item If unbiased ie. $\pi_1=\pi_2$, then $\vec{x}^T\vec{a} = \frac{\lVert \vec{a} \rVert_2^2}{2}$ which geometrically means the decision hyperplance is in the middle between $\vec{0}$ and $\vec{a}$ (In 1-D, $x=\frac{a}{2}$).
-        \item If biased with no signal ie. $\pi_1>\pi_2$, then $\log{\frac{\pi_1}{\pi_2}}>0$, which geometrically means the decision hyperplance shifts towards $\vec{a}$.
-        \item If biased with signal ie. $\pi_1<\pi_2$, then $\log{\frac{\pi_1}{\pi_2}}<0$, which geometrically means the decision hyperplance shifts towards $\vec{0}$.
+        \item If unbiased ie. $\pi_1=\pi_2$, then $\mathbf{x}^T\mathbf{a} = \frac{\lVert \mathbf{a} \rVert_2^2}{2}$ which geometrically means the decision hyperplance is in the middle between $\mathbf{0}$ and $\mathbf{a}$ (In 1-D, $x=\frac{a}{2}$).
+        \item If biased with no signal ie. $\pi_1>\pi_2$, then $\log{\frac{\pi_1}{\pi_2}}>0$, which geometrically means the decision hyperplance shifts towards $\mathbf{a}$.
+        \item If biased with signal ie. $\pi_1<\pi_2$, then $\log{\frac{\pi_1}{\pi_2}}<0$, which geometrically means the decision hyperplance shifts towards $\mathbf{0}$.
     \end{itemize}
     
-    \item Prediction (Detection) for some $\vec{x} \in R^d$ based on decision hyperplane: If $<\vec{x}, \vec{a}> <= \frac{\lVert \vec{a} \rVert_2^2}{2} + \sigma^2\log{\frac{\pi_1}{\pi_2}}$, predict $y=1$ (no signal). Else, predict $y=2$ (signal).
+    \item Prediction (Detection) for some $\mathbf{x} \in \mathbf{R}^d$ based on decision hyperplane:\\
+    If $\langle \mathbf{x}, \mathbf{a} \rangle \leq \frac{\lVert \mathbf{a} \rVert_2^2}{2} + \sigma^2\log{\frac{\pi_1}{\pi_2}}$, predict $l=1$ (no signal). Else, predict $l=2$ (signal).
     
 \end{enumerate}
-
-
 
 \end{itemize}
 
+Discrete Pixel problem:
+\begin{itemize}
+    \item Assume molecule with discrete pixels ($p \times q$ in 2-D), $N$ number of grids, 4 rotations $R \in \{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}\}$, and $N-p$ translations $t \in {1,2,...,N-p}$. For each instance (1-D projection) $\mathbf{y} \in \mathbf{R}^N$, each component $y_i$ of $\mathbf{y}$ represents the sum along the ith column. 
+    \item Given $\mathbf{y} =  \mathbf{a}_{t_0,R_0} + \epsilon_\sigma$ ($\mathbf{y}, \mathbf{a}_{t_0,R_0}, \epsilon_\sigma \in \mathbf{R}^N$ and $ \mathbf{a}_{t,R}$ as signal, $\epsilon_\sigma$ as iid noise $N(0, \sigma^2)$), find most likely $t$, $R$ w.r.t $\mathbf{y}$. ($4(N-P)+1$ possible outcomes with 1 for no match).
+    \item Methods:
+    \begin{enumerate}
+        \item $\min_{t, R} \lVert \mathbf{y}- \mathbf{a}_{t,R}\rVert^2$
+        \item $\max_{t,R} \langle \hat{y}, \hat{a_{t,R}} \rangle$, where $\hat{v} = \frac{1}{c}(\mathbf{v} - v_m)$ and $v_m = \frac{\sum_{i=1}^N v_i}{N}$, $c = \lVert \mathbf{v}- v_m\rVert$
+        \item Let $f(t) = \max_R \langle \hat{y}, \hat{a_{t,R}} \rangle$. Pick a threshold $\tau$ based on false positive/negative rates (penalty).\\
+        If $f(\widetilde{t}) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
+        \item Let $g(t) = {mean}_R \langle \hat{y}, \hat{a_{t,R}} \rangle$, $h(t) = {variance}_R  \langle \hat{y}, \hat{a_{t,R}} \rangle$, and $j(t) = \frac{f(t)-g(t)}{\sqrt{h(t)}}$. \\
+        If $j(\widetilde{t}) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
+    \end{enumerate}
+\end{itemize}
 
 \end{document}
