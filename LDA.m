@@ -1,3 +1,6 @@
+% Prereq: You need to install stats/ML toolbox to run this script
+clf;
+
 a = [5,5]; %signal
 sigmas = 1:0.5:50; %noise
 d = length(a); %dimension
@@ -20,6 +23,7 @@ for i=1:length(sigmas) %noise
     
     % plot gaussian blobs in 2-D
     if (d==2 && sigma==1)
+        figure(1);
         plot(x(truelabel==0,1),x(truelabel==0,2), 'r.', 'Markersize', 5);
         hold on;
         plot(x(truelabel==1,1),x(truelabel==1,2), 'b.', 'Markersize', 5);
