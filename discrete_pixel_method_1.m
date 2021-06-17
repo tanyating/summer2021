@@ -1,3 +1,5 @@
+addpath('utils')
+
 Rs = [0, pi/2, pi, pi*3/2]; %4 rotations
 N = 10;
 m = [1 2 0; 0 10 0];
