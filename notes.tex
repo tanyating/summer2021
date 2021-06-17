@@ -115,23 +115,4 @@ Let $\epsilon_{\sigma}^{i}  \in \mathbb{R}^{N}$, $i=1,2,\ldots M$, denote iid no
 \item For fixed R, plot the histogram values $d_{1}(\epsilon_{\sigma}^i, \ba_{t,R}), d_{2}(\epsilon_{\sigma}^i, \ba_{t,R})$, $t\in 1,2,\ldots N-p$. Also plot the histogram values of $f(t,\epsilon_{\sigma}^i)$, and $j(t,\epsilon_{\sigma}^i)$.
 \end{enumerate}
 
-\subsection{\date{Jun 17th}}
-LDA
-\begin{itemize}
-    \item Determine decision boundary (in any dimension d, $\mathbf{x} \in \mathbf{R}^d$) with prior and penalty matrix.
-\begin{enumerate}
-    \item Assume prior (number of occurrences) for no signal is $\pi_1$, and prior for signal is $\pi_2$ ($\pi_2 = 1-\pi_1$).
-    \item Penalty/Cost Matrix (corresponding to the Error Matrix):
-    
-    \begin{tabular}{l|l|l}
-    Truth/Detection&No Signal&Signal\\\hline
-    No Signal&0&F (fp)\\\hline
-    Signal&M (fn)&0\\
-    \end{tabular}
-    \item Decision Rule: If $\langle \mathbf{x}, \frac{\mathbf{a} }{\lVert \mathbf{a} \rVert}\rangle \le b$, predict $l=1$ (no signal). Else, predict $l=2$ (signal). $b$ is the decision point.
-    \item False positive rate and false negative rate given decision point $b$ are given in equations \ref{eq:1} and \ref{eq:2}.
-\end{enumerate}
-
-\end{itemize}
-
 \end{document}
