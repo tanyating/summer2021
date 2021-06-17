@@ -48,12 +48,14 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
     \item False Positive rate: the area of the right tail of label-1 (no signal) Gaussian PDF beyond decision boundary $x=b$.
     \begin{equation}
         fp = \int_{\frac{b}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} \erf(\frac{b}{\sqrt{2}\sigma})
+    \label{eq:1}
     \end{equation}
     
     False Negative rate: the area of the left tail of label-2 (signal) Gaussian PDF below decision boundary $x=b$.
     
     \begin{equation}
         fn = \int_{-\infty}^{\frac{b-a}{\sigma}} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \int_{-\frac{b-a}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} \erf(-\frac{b-a}{\sqrt{2}\sigma})
+    \label{eq:2}
     \end{equation}
     
     
@@ -102,6 +104,25 @@ Discrete Pixel problem:
         \item Let $g(t) = {mean}_R \langle \hat{y}, \hat{a_{t,R}} \rangle$, $h(t) = {variance}_R  \langle \hat{y}, \hat{a_{t,R}} \rangle$, and $j(t) = \frac{f(t)-g(t)}{\sqrt{h(t)}}$. \\
         If $j(\widetilde{t}) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
     \end{enumerate}
+\end{itemize}
+
+\subsection{\date{Jun 17th}}
+LDA
+\begin{itemize}
+    \item Determine decision boundary (in any dimension d, $\mathbf{x} \in \mathbf{R}^d$) with prior and penalty matrix.
+\begin{enumerate}
+    \item Assume prior (number of occurrences) for no signal is $\pi_1$, and prior for signal is $\pi_2$ ($\pi_2 = 1-\pi_1$).
+    \item Penalty/Cost Matrix (corresponding to the Error Matrix):
+    
+    \begin{tabular}{l|l|l}
+    Truth/Detection&No Signal&Signal\\\hline
+    No Signal&0&F (fp)\\\hline
+    Signal&M (fn)&0\\
+    \end{tabular}
+    \item Decision Rule: If $\langle \mathbf{x}, \frac{\mathbf{a} }{\lVert \mathbf{a} \rVert}\rangle \le b$, predict $l=1$ (no signal). Else, predict $l=2$ (signal). $b$ is the decision point.
+    \item False positive rate and false negative rate given decision point $b$ are given in equations \ref{eq:1} and \ref{eq:2}.
+\end{enumerate}
+    
 \end{itemize}
 
 \end{document}
