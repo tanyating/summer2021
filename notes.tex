@@ -2,7 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[margin=1in]{geometry}
 \usepackage{listings}
-\usepackage{amsmath}
+\usepackage{amsmath,amssymb}
 
 \title{Summer 2021}
 \author{Tanya}
@@ -11,6 +11,8 @@
 \usepackage{natbib}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\newcommand{\by}{\boldsymbol{y}}
+\newcommand{\ba}{\boldsymbol{a}}
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 
@@ -91,20 +93,29 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
 
 \end{itemize}
 
-Discrete Pixel problem:
+\section{Discrete Pixel problem}
 \begin{itemize}
     \item Assume molecule with discrete pixels ($p \times q$ in 2-D), $N$ number of grids, 4 rotations $R \in \{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}\}$, and $N-p$ translations $t \in {1,2,...,N-p}$. For each instance (1-D projection) $\mathbf{y} \in \mathbf{R}^N$, each component $y_i$ of $\mathbf{y}$ represents the sum along the ith column. 
     \item Given $\mathbf{y} =  \mathbf{a}_{t_0,R_0} + \epsilon_\sigma$ ($\mathbf{y}, \mathbf{a}_{t_0,R_0}, \epsilon_\sigma \in \mathbf{R}^N$ and $ \mathbf{a}_{t,R}$ as signal, $\epsilon_\sigma$ as iid noise $N(0, \sigma^2)$), find most likely $t$, $R$ w.r.t $\mathbf{y}$. ($4(N-P)+1$ possible outcomes with 1 for no match).
     \item Methods:
     \begin{enumerate}
-        \item $\min_{t, R} \lVert \mathbf{y}- \mathbf{a}_{t,R}\rVert^2$
-        \item $\max_{t,R} \langle \hat{y}, \hat{a_{t,R}} \rangle$, where $\hat{v} = \frac{1}{c}(\mathbf{v} - v_m)$ and $v_m = \frac{\sum_{i=1}^N v_i}{N}$, $c = \lVert \mathbf{v}- v_m\rVert$
-        \item Let $f(t) = \max_R \langle \hat{y}, \hat{a_{t,R}} \rangle$. Pick a threshold $\tau$ based on false positive/negative rates (penalty).\\
-        If $f(\widetilde{t}) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
-        \item Let $g(t) = {mean}_R \langle \hat{y}, \hat{a_{t,R}} \rangle$, $h(t) = {variance}_R  \langle \hat{y}, \hat{a_{t,R}} \rangle$, and $j(t) = \frac{f(t)-g(t)}{\sqrt{h(t)}}$. \\
-        If $j(\widetilde{t}) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
+        \item $\min_{t,R} d_{1}(\by,\mathbf{a}_{t,R}) = \min_{t, R} \lVert \by- \mathbf{a}_{t,R}\rVert^2$
+        \item $\max_{t,R} d_{2}(\hat{\by}, \hat{a_{t,R}}) = \max_{t,R} \langle \hat{\by}, \hat{a_{t,R}} \rangle$, where $\hat{v} = \frac{1}{c}(\mathbf{v} - v_m)$ and $v_m = \frac{\sum_{i=1}^N v_i}{N}$, $c = \lVert \mathbf{v}- v_m\rVert$
+        \item Let $f(t,\by) = \max_R \langle \hat{y}, \hat{a_{t,R}} \rangle$. Pick a threshold $\tau$ based on false positive/negative rates (penalty).\\
+        If $f(\widetilde{t},\by) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
+        \item Let $g(t,\by) = {mean}_R \langle \hat{\by}, \hat{a_{t,R}} \rangle$, $h(t,\by) = {variance}_R  \langle \hat{\by}, \hat{a_{t,R}} \rangle$, and $j(t,\by) = \frac{f(t,\by)-g(t,\by)}{\sqrt{h(t,\by)}}$. \\
+        If $j(\widetilde{t},\by) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
     \end{enumerate}
 \end{itemize}
+
+\subsection{Histogram study}
+Let $\epsilon_{\sigma}^{i}  \in \mathbb{R}^{N}$, $i=1,2,\ldots M$, denote iid noise vectors with in $\mathbb{R}^{N}$ with mean $0$ and variance $\sigma^2$ as before. 
+
+\begin{enumerate}
+\item Plot the histogram of values $d_{1}(\epsilon_{\sigma}^i, \ba_{t,R}), d_{2}(\epsilon_{\sigma}^i, \ba_{t,R})$, $t\in 1,2,\ldots N-p$, $R \in \{ 0,\pi/2, \pi, 3\pi/2 \}$
+\item For fixed R, plot the histogram values $d_{1}(\epsilon_{\sigma}^i, \ba_{t,R}), d_{2}(\epsilon_{\sigma}^i, \ba_{t,R})$, $t\in 1,2,\ldots N-p$. Also plot the histogram values of $f(t,\epsilon_{\sigma}^i)$, and $j(t,\epsilon_{\sigma}^i)$.
+\end{enumerate}
+
 
 \subsection{\date{Jun 17th}}
 LDA
@@ -124,5 +135,6 @@ LDA
 \end{enumerate}
     
 \end{itemize}
+
 
 \end{document}
