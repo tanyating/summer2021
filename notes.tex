@@ -93,7 +93,7 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
 
 \end{itemize}
 
-\section{Discrete Pixel problem}
+\subsubsection{Discrete Pixel problem}
 \begin{itemize}
     \item Assume molecule with discrete pixels ($p \times q$ in 2-D), $N$ number of grids, 4 rotations $R \in \{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}\}$, and $N-p$ translations $t \in {1,2,...,N-p}$. For each instance (1-D projection) $\mathbf{y} \in \mathbf{R}^N$, each component $y_i$ of $\mathbf{y}$ represents the sum along the ith column. 
     \item Given $\mathbf{y} =  \mathbf{a}_{t_0,R_0} + \epsilon_\sigma$ ($\mathbf{y}, \mathbf{a}_{t_0,R_0}, \epsilon_\sigma \in \mathbf{R}^N$ and $ \mathbf{a}_{t,R}$ as signal, $\epsilon_\sigma$ as iid noise $N(0, \sigma^2)$), find most likely $t$, $R$ w.r.t $\mathbf{y}$. ($4(N-P)+1$ possible outcomes with 1 for no match).
@@ -108,7 +108,7 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
     \end{enumerate}
 \end{itemize}
 
-\subsection{Histogram study}
+\subsubsection{Histogram study}
 Let $\epsilon_{\sigma}^{i}  \in \mathbb{R}^{N}$, $i=1,2,\ldots M$, denote iid noise vectors with in $\mathbb{R}^{N}$ with mean $0$ and variance $\sigma^2$ as before. 
 
 \begin{enumerate}
@@ -120,9 +120,9 @@ Let $\epsilon_{\sigma}^{i}  \in \mathbb{R}^{N}$, $i=1,2,\ldots M$, denote iid no
 \subsection{\date{Jun 17th}}
 LDA
 \begin{itemize}
-    \item Determine decision boundary (in any dimension d, $\mathbf{x} \in \mathbf{R}^d$) with prior and penalty matrix.
+    \item Determine decision boundary (in any dimension d, $\mathbf{x} \in \mathbf{R}^d$) with prior and penalty matrix. (two classes with $\mathbf{\mu}_1 = \mathbf{0}$ (no signal) and $\mathbf{\mu}_2 = \mathbf{a}$ (signal))
 \begin{enumerate}
-    \item Assume prior (number of occurrences) for no signal is $\pi_1$, and prior for signal is $\pi_2$ ($\pi_2 = 1-\pi_1$).
+    \item Assume prior (number of occurrences) for no signal is $\pi_1$, and prior for signal is $\pi_2$ ($\pi_2 = 1-\pi_1$). 
     \item Penalty/Cost Matrix (corresponding to the Error Matrix):
     
     \begin{tabular}{l|l|l}
@@ -131,7 +131,29 @@ LDA
     Signal&M (fn)&0\\
     \end{tabular}
     \item Decision Rule: If $\langle \mathbf{x}, \frac{\mathbf{a} }{\lVert \mathbf{a} \rVert}\rangle \le b$, predict $l=1$ (no signal). Else, predict $l=2$ (signal). $b$ is the decision point.
-    \item False positive rate and false negative rate given decision point $b$ are given in equations \ref{eq:1} and \ref{eq:2}.
+    \item False positive rate and false negative rate given decision point $b$:
+    \begin{equation}
+        fp = \alpha(b) = \int_{\frac{b}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} \erf(\frac{b}{\sqrt{2}\sigma})
+    \end{equation}
+    
+    \begin{equation}
+        fn= \beta(b) = \int_{-\infty}^{\frac{b-a}{\sigma}} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \int_{-\frac{b-a}{\sigma}}^{\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{t^2}{2}}dt = \frac{1}{2} - \frac{1}{2} \erf(-\frac{b-\lVert \mathbf{a} \rVert}{\sqrt{2}\sigma})
+    \end{equation}
+    
+    \item Expected cost function: $\mathbf{E}[J] = \pi_1\alpha(b)F+(1-\pi_1)\beta(b)M$
+    \item Minimize cost function w.r.t. $b$, assuming $M=1$.\\
+    $\min_b \mathbf{E}[J]$, Take $\nabla \mathbf{E}[J] = 0$\\\\
+    $\pi_1 F(-\frac{1}{2}\cdot\frac{2}{\sqrt{\pi}}\cdot e^{-\frac{b^2}{2\sigma^2}}\cdot \frac{1}{\sqrt{2}\sigma}) +
+    (1-\pi_1)(-\frac{1}{2}\cdot\frac{2}{\sqrt{\pi}}\cdot e^{-\frac{{(b-\lVert \mathbf{a} \rVert)}^2}{2\sigma^2}}\cdot -\frac{1}{\sqrt{2}\sigma})=0$\\\\
+    $\frac{1-\pi_1}{\sqrt{2\pi}\sigma} e^{-\frac{{(b-\lVert \mathbf{a} \rVert)}^2}{2\sigma^2}} = \frac{\pi_1 F}{\sqrt{2\pi}\sigma} e^{-\frac{b^2}{2\sigma^2}}$\\\\
+    $\log{(1-\pi_1)}-\frac{{(b-\lVert \mathbf{a} \rVert)}^2}{2\sigma^2} =
+    \log{(\pi_1F)}-\frac{b^2}{2\sigma^2}$\\\\
+    $\frac{b^2-{(b-\lVert \mathbf{a} \rVert)}^2}{2\sigma^2} = log{(\frac{\pi_1F}{1-\pi_1})}$\\\\
+    $2\lVert \mathbf{a} \rVert b - {\lVert \mathbf{a} \rVert}^2 = 2\sigma^2log{(\frac{\pi_1F}{1-\pi_1})}$\\\\
+    \begin{equation}
+        b = \frac{\sigma^2log{(\frac{\pi_1F}{1-\pi_1})}}{\lVert \mathbf{a} \rVert} + \frac{\lVert \mathbf{a} \rVert}{2}
+    \end{equation}
+    
 \end{enumerate}
     
 \end{itemize}
