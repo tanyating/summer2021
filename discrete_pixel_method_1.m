@@ -2,7 +2,7 @@ addpath('utils');
 clf;
 
 Rs = [0, pi/2, pi, pi*3/2]; %4 rotations
-N = 2; %N grids
+N = 10; %N grids
 p = 2; %molecule length (p>q)
 q = 1; %molecule width
 mol = rand(q,p).*randi(10,q,p); %random molecules in 2D
@@ -17,7 +17,7 @@ for i=0:N-p
     end
 end
 
-sigmas = 0.1:0.01:1; %noise
+sigmas = 0.1:0.1:10; %noise
 fps = zeros(size(sigmas));
 fns = zeros(size(sigmas));
 
@@ -27,10 +27,10 @@ for l=1:length(sigmas)
     sigma = sigmas(l);
     cov = sigma^2.*eye(N);
     
-    m = 10000; %number of random examples
-    y = mvnrnd(zeros(N,1), cov, m); %add noise to each example
-    truelabel = zeros(m,1);
-    filter = rand(m,1); %uniform distribution 
+    M = 10000; %number of random examples
+    y = mvnrnd(zeros(N,1), cov, M); %add noise to each example
+    truelabel = zeros(M,1);
+    filter = rand(M,1); %uniform distribution 
     p_0 = 0.5; %prior for no signal
     tmp = (1-p_0)/(4*(N-p+1)); %equally likely for all classes with signal
 %     tmp = 1/(4*(N-p+1)+1);
@@ -62,7 +62,7 @@ for l=1:length(sigmas)
 
 
     % predict labels by minimizing distance (norm)
-    predlabel = zeros(m,1);
+    predlabel = zeros(M,1);
 
     cur_min= sum(y.^2,2); %distance to origin (no signal)
     for i=0:N-p
