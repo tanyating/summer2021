@@ -1,12 +1,15 @@
+% ahb tweaks added 6/23/21 - you'll want to replace this by a short script
+% calling modular functions anyway.
+
 addpath('utils');
-clf;
 
 Rs = [0, pi/2, pi, pi*3/2]; %4 rotations
-N = 10; %N grids
-p = 2; %molecule length (p>q)
-q = 1; %molecule width
-mol = rand(q,p).*randi(10,q,p); %random molecules in 2D
-ts = 0:N-p; %N-p+1 translations
+N = 3; %N grids = # pixels in 1D
+p = 2; %molecule length (p>=q)
+q = 2; %1 %molecule width
+rng(0);   % fix seed
+mol = rand(q,p) %.*randi(10,q,p); %random molecule in 2D
+ts = 0:N-p; %N-p+1 translations   (-> consider making wrap-around so no end effects?)
 A = zeros(N-p+1,4,N); %store all a_{t,R} (index:translation, rotation, vector)
 
 %construct a_{t,R} based on mol
@@ -16,14 +19,24 @@ for i=0:N-p
         A(1+i,j,1+i:i+length(tmp)) = tmp;
     end
 end
+AA = reshape(A,[4*(N-p+1) N]);  % stack configuration vectors as rows
+% this ordering could be used throughout for confusion matrices too...
 
-sigmas = 0.1:0.1:10; %noise
+sigmas = 0.01:0.01:2.0; %0.1:0.1:10; %noise
 fps = zeros(size(sigmas));
 fns = zeros(size(sigmas));
 
-sigma_show = 1;
+sigma_show = 0.1;
 
-for l=1:length(sigmas)
+% if in low dims, show the noiseless vectors (centers of blobs):
+if N==2, figure(1); clf; plot(AA(:,1),AA(:,2),'+'); axis equal; hold on; title('clean signals'); drawnow; end
+if N==3, figure(1); clf; plot3(AA(:,1),AA(:,2),AA(:,3),'+'); axis vis3d equal; hold on; title('clean signals'); drawnow; end
+% (you'll want to split this plotter out as separate func, and
+% also: figure; imagesc(AA); colorbar; colormap(gray(256))
+% also later:  figure; imagesc(y); colorbar; colormap(gray(256))
+
+
+  for l=1:length(sigmas)
     sigma = sigmas(l);
     cov = sigma^2.*eye(N);
     
@@ -38,8 +51,12 @@ for l=1:length(sigmas)
 %     truelabel(filter>tmp) = 1;
     
     % plot no signal class (guassian blobs) in 2D
-    if (N==2 && sigma==sigma_show)
+    if (N==2 && abs(sigma-sigma_show)<1e-14)    % note this! :)
         plot(y((truelabel==0),1),y((truelabel==0),2),'.','Markersize',10);
+        hold on;
+    end
+    if (N==3 && abs(sigma-sigma_show)<1e-14)
+        plot3(y((truelabel==0),1),y((truelabel==0),2),y((truelabel==0),3),'.','Markersize',10);
         hold on;
     end
 
@@ -52,8 +69,12 @@ for l=1:length(sigmas)
             y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp), :) = y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp), :) + a;
             
             % plot signal classes (guassian blobs) in 2D
-            if (N==2 && sigma==sigma_show)
+            if (N==2 && abs(sigma-sigma_show)<1e-14)
                 plot(y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),1),y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),2),'.','Markersize',10);
+            end
+            if (N==3 && abs(sigma-sigma_show)<1e-14)
+              plot3(y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),1),y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),2),y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),3),'.','Markersize',10);
+              hold on;
             end
             
             k = k+1;
