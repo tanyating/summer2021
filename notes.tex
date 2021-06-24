@@ -95,17 +95,41 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
 
 \subsubsection{Discrete Pixel problem}
 \begin{itemize}
-    \item Assume molecule with discrete pixels ($p \times q$ in 2-D), $N$ number of grids, 4 rotations $R \in \{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}\}$, and $N-p$ translations $t \in {1,2,...,N-p}$. For each instance (1-D projection) $\mathbf{y} \in \mathbf{R}^N$, each component $y_i$ of $\mathbf{y}$ represents the sum along the ith column. 
-    \item Given $\mathbf{y} =  \mathbf{a}_{t_0,R_0} + \epsilon_\sigma$ ($\mathbf{y}, \mathbf{a}_{t_0,R_0}, \epsilon_\sigma \in \mathbf{R}^N$ and $ \mathbf{a}_{t,R}$ as signal, $\epsilon_\sigma$ as iid noise $N(0, \sigma^2)$), find most likely $t$, $R$ w.r.t $\mathbf{y}$. ($4(N-P)+1$ possible outcomes with 1 for no match).
-    \item Methods:
+    \item Assume molecule with discrete pixels ($mol \in \mathbf{R}^{p \times q}$ and $p>q$ in 2-D), $N$ number of grids, 4 rotations $R \in \{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}\}$, and $N-p+1$ translations $t \in {0,1,2,...,N-p}$. For each instance (1-D projection) $\mathbf{y} \in \mathbf{R}^N$, each component $y^i$ of $\mathbf{y}$ represents the sum along the ith column. In total, there are $N_c = 4\times(N-p+1)$ configurations (set of translations and rotations) for signals (ie. molecule detected). 
+    \item Given molecule $mol$, generate template $A \in \mathbf{R}^{(N-p+1) \times 4 \times N}$ such that $A(i,j,:) \in \mathbf{R}^N = a_{t=i-1, R=(j-1)\frac{\pi}{2}}$ represents a projected signal with certain translation ($i \in {1,..,N-p+1}$) and rotation ($j \in {1,..,4}$). (We can reshape $A$ into $AA \in \mathbf{R}^{N_c \times N}$ so that each row represents a configuration, ie. a projected signal without noise).
+    \item Given an input vector $\mathbf{y} =  \mathbf{a}_{t_0,R_0} + \epsilon_\sigma$ ($\mathbf{y}, \mathbf{a}_{t_0,R_0}, \epsilon_\sigma \in \mathbf{R}^N$ and $ \mathbf{a}_{t,R}$ as signal, $\epsilon_\sigma$ as iid noise $N(0, \sigma^2)$), find most likely $t$, $R$ w.r.t $\mathbf{y}$. ($N_c+1$ possible outcomes with 1 for no match).
+    \item Extend to $M$ instances: given an input matrix $\mathbf{Y} = [\mathbf{y_1}^T; \mathbf{y_2}^T; ...; \mathbf{y_M}^T] \in \mathbf{R}^{M\times N}$, for each $\mathbf{y_i}$ find most likely $t$, $R$. (Assume prior $p_0=0.5$ such that half of the instances are just noise, and the rest of instances with signal are evenly distributed into different sets of translation and rotation (configurations) with probability $\frac{1-p_0}{N_c}$)
+    \item Methods of detection/prediction (for each $\mathbf{y_i}$, $i \in {1,...,M}$):
     \begin{enumerate}
-        \item $\min_{t,R} d_{1}(\by,\mathbf{a}_{t,R}) = \min_{t, R} \lVert \by- \mathbf{a}_{t,R}\rVert^2$
-        \item $\max_{t,R} d_{2}(\hat{\by}, \hat{a_{t,R}}) = \max_{t,R} \langle \hat{\by}, \hat{a_{t,R}} \rangle$, where $\hat{v} = \frac{1}{c}(\mathbf{v} - v_m)$ and $v_m = \frac{\sum_{i=1}^N v_i}{N}$, $c = \lVert \mathbf{v}- v_m\rVert$
-        \item Let $f(t,\by) = \max_R \langle \hat{y}, \hat{a_{t,R}} \rangle$. Pick a threshold $\tau$ based on false positive/negative rates (penalty).\\
-        If $f(\widetilde{t},\by) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
-        \item Let $g(t,\by) = {mean}_R \langle \hat{\by}, \hat{a_{t,R}} \rangle$, $h(t,\by) = {variance}_R  \langle \hat{\by}, \hat{a_{t,R}} \rangle$, and $j(t,\by) = \frac{f(t,\by)-g(t,\by)}{\sqrt{h(t,\by)}}$. \\
-        If $j(\widetilde{t},\by) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{y}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
+        \item $\min_{t,R} d_{1}(\by_i,\mathbf{a}_{t,R}) = \min_{t, R} \lVert \by_i- \mathbf{a}_{t,R}\rVert^2$
+        \begin{itemize}
+            \item This is the same as modeling each configuration of signal($\mathbf{a}_{t,R}$) and the no signal (origin) as a multivariate Gaussian distribution with same noise $\sigma$ (assuming prior for all $N_c+1$ outcomes is equal).
+            \item For each $\mathbf{a}_{t,R}$, we can construct a decision hyperplane between $\mathbf{a}_{t,R}$ and $\mathbf{0}$. Choose the nearest hyperplane $\widetilde{b} = \frac{a_{min}}{2}$ between the origin and $\mathbf{a}_{min} = \min{\lVert  \mathbf{a}_{t,R}\rVert}$, we can get a lower bound for false positive rate as $\frac{1}{2} - \frac{1}{2} \erf(\frac{\widetilde{b}}{\sqrt{2}\sigma})$, and a upper bound as $(\frac{1}{2} - \frac{1}{2} \erf(\frac{\widetilde{b}}{\sqrt{2}\sigma}))\cdot N_c$.
+        \end{itemize}
+        \item $\max_{t,R} d_{2}(\hat{\by_i}, \hat{a_{t,R}}) = \max_{t,R} \langle \hat{\by_i}, \hat{a_{t,R}} \rangle$, where $\hat{v} = \frac{1}{c}(\mathbf{v} - v_m)$ and $v_m = \frac{\sum_{i=1}^N v_i}{N}$, $c = \lVert \mathbf{v}- v_m\rVert$
+        \item Let $f(t,\by_i) = \max_R \langle \hat{\by_i}, \hat{a_{t,R}} \rangle$. Pick a threshold $\tau$ based on false positive/negative rates (penalty).\\
+        If $f(\widetilde{t},\by_i) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{\by_i}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
+        \item Let $g(t,\by_i) = {mean}_R \langle \hat{\by_i}, \hat{a_{t,R}} \rangle$, $h(t,\by_i) = {variance}_R  \langle \hat{\by_i}, \hat{a_{t,R}} \rangle$, and $j(t,\by_i) = \frac{f(t,\by_i)-g(t,\by_i)}{\sqrt{h(t,\by_i)}}$. \\
+        If $j(\widetilde{t},\by_i) > \tau$ and $\widetilde{R} = \argmax_R \langle \hat{\by_i}, \hat{a_{\widetilde{t},R}} \rangle$, then $\widetilde{t}$, $\widetilde{R}$ is a candidate.
     \end{enumerate}
+    \item Detection/prediction error measurements: given known true labels ($truelabel \in \mathbf{R}^{M\times 2}$, for each $\by_i$, there's a corresponding label $\mathbf{l_i} \in {\{1,..,N-p+1\}\times{\{1,..,4\}}}$, where $l_i^1$ denotes translation and $l_i^2$ denotes rotation, and the pair $[0,0]^T$ represents no molecule/signal) and predicted labels from one of the above methods ($predlabel \in \mathbf{R}^{M\times 2}$), we can construct a confusion (error) matrix $C$ ($N_c+1$ number of rows and columns):
+    
+    \begin{tabular}{l|l|l|l|l}
+    Truth/Detection&$[0,0]^T$&$[1,1]^T$&...&$[N-p+1,4]^T$\\\hline
+    $[0,0]^T$(No Signal)&Correct& &...& \\\hline
+    $[1,1]^T$($t=0,R=0$)& &Correct&...& \\\hline
+    ...& & & & \\\hline
+    $[N-p+1,4]^T$($t=N-p,R=\frac{3\pi}{2}$)& & &...&Correct\\\hline
+    \end{tabular}
+    
+    \begin{enumerate}
+        \item For each label pair $[i,j]^T$, we can index by $k=(i-1)*4+j+1$ and index $[0,0]^T$ as $k=1$.
+        \item Before normalization, each entry corresponds to the number of occurrences based on truth label and detected label ($\sum_{i}^{N_c+1}\sum_{j}^{N_c+1} C_{ij} = M$).
+        \item Normalization: divide each entry by total number of instances ($\sum_{i}^{N_c+1}\sum_{j}^{N_c+1} C_{ij} = 1$).
+        \item Perfect detection corresponds to a diagonal matrix (if normalized, $C_{11}=p_0$, $C_{ii}=\frac{1-p_0}{Nc}$ for $i>1$).
+        
+    \end{enumerate}
+    
 \end{itemize}
 
 \subsubsection{Histogram study}
