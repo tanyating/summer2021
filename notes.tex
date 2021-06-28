@@ -123,7 +123,7 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
     \end{tabular}
     
     \begin{enumerate}
-        \item For each label pair $[i,j]^T$, we can index by $k=(i-1)*4+j$ and index $[0,0]^T$ as $k=0$.
+        \item For each label pair $[i,j]^T$, we can index by $k=i*4+j$, and index $[0,0]^T$ as $k=0$ for noise.
         \item Before normalization, each entry corresponds to the number of occurrences based on truth label and detected label ($\sum_{i}^{N_c+1}\sum_{j}^{N_c+1} C_{ij} = M$).
         \item Normalization: divide each entry by total number of instances ($\sum_{i}^{N_c+1}\sum_{j}^{N_c+1} C_{ij} = 1$).
         \item Perfect detection corresponds to a diagonal matrix (if normalized, $C_{11}=p_0$, $C_{ii}=\frac{1-p_0}{Nc}$ for $i>1$).
