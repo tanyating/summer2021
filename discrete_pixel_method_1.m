@@ -1,126 +1,71 @@
 % ahb tweaks added 6/23/21 - you'll want to replace this by a short script
 % calling modular functions anyway.
 
-addpath('utils');
+addpath('utils','dp');
 
-Rs = [0, pi/2, pi, pi*3/2]; %4 rotations
 N = 3; %N grids = # pixels in 1D
 p = 2; %molecule length (p>=q)
 q = 2; %1 %molecule width
-rng(0);   % fix seed
-mol = rand(q,p) %.*randi(10,q,p); %random molecule in 2D
-ts = 0:N-p; %N-p+1 translations   (-> consider making wrap-around so no end effects?)
-A = zeros(N-p+1,4,N); %store all a_{t,R} (index:translation, rotation, vector)
+Nc = (N-p+1)*4; % number of configurations (signal)
+Nt = N-p+1; % number of translations
+mol = molecule(p,q) %.*randi(10,q,p); %random molecule in 2D
 
 %construct a_{t,R} based on mol
-for i=0:N-p
-    for j=1:4
-        tmp=sum(rot90(mol,j-1),1);
-        A(1+i,j,1+i:i+length(tmp)) = tmp;
-    end
-end
-AA = reshape(A,[4*(N-p+1) N]);  % stack configuration vectors as rows
-% this ordering could be used throughout for confusion matrices too...
+[A,AA] = template(mol,N); 
 
-sigmas = 0.01:0.01:2.0; %0.1:0.1:10; %noise
+sigmas = 0.01:0.01:2; %0.1:0.1:10; %noise
 fps = zeros(size(sigmas));
 fns = zeros(size(sigmas));
 
-sigma_show = 0.1;
-
-% if in low dims, show the noiseless vectors (centers of blobs):
-if N==2, figure(1); clf; plot(AA(:,1),AA(:,2),'+'); axis equal; hold on; title('clean signals'); drawnow; end
-if N==3, figure(1); clf; plot3(AA(:,1),AA(:,2),AA(:,3),'+'); axis vis3d equal; hold on; title('clean signals'); drawnow; end
-% (you'll want to split this plotter out as separate func, and
-% also: figure; imagesc(AA); colorbar; colormap(gray(256))
-% also later:  figure; imagesc(y); colorbar; colormap(gray(256))
+sigma_show = 0.1; % noise level to plot data
+sigma_error = 2; % noise level to show error matrix
 
 
-  for l=1:length(sigmas)
+for l=1:length(sigmas)
     sigma = sigmas(l);
     cov = sigma^2.*eye(N);
     
-    M = 10000; %number of random examples
-    y = mvnrnd(zeros(N,1), cov, M); %add noise to each example
-    truelabel = zeros(M,1);
-    filter = rand(M,1); %uniform distribution 
-    p_0 = 0.5; %prior for no signal
-    tmp = (1-p_0)/(4*(N-p+1)); %equally likely for all classes with signal
-%     tmp = 1/(4*(N-p+1)+1);
-    truelabel(filter>p_0) = 1;
-%     truelabel(filter>tmp) = 1;
-    
-    % plot no signal class (guassian blobs) in 2D
-    if (N==2 && abs(sigma-sigma_show)<1e-14)    % note this! :)
-        plot(y((truelabel==0),1),y((truelabel==0),2),'.','Markersize',10);
-        hold on;
+    M = 10000; % number of random examples
+    p_0 = 0.5; % prior prob for noise (no signal)
+    [y,tl_class,tl_pair] = randdata(M,A,sigma,p_0); % generate y and true labels
+    if (abs(sigma-sigma_show)<1e-14) 
+        plot_data_sig(y,AA,tl_class); % plot y with clean signals
     end
-    if (N==3 && abs(sigma-sigma_show)<1e-14)
-        plot3(y((truelabel==0),1),y((truelabel==0),2),y((truelabel==0),3),'.','Markersize',10);
-        hold on;
-    end
-
-    %assign each random vector with signal based on true label
-    a = zeros(1,N);
-    k=0;
-    for i=0:N-p
-        for j=1:4
-            a(1,:) = A(i+1,j,:); %a_{t,R}
-            y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp), :) = y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp), :) + a;
-            
-            % plot signal classes (guassian blobs) in 2D
-            if (N==2 && abs(sigma-sigma_show)<1e-14)
-                plot(y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),1),y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),2),'.','Markersize',10);
-            end
-            if (N==3 && abs(sigma-sigma_show)<1e-14)
-              plot3(y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),1),y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),2),y(filter>(p_0+k*tmp) & filter<=(p_0+(k+1)*tmp),3),'.','Markersize',10);
-              hold on;
-            end
-            
-            k = k+1;
-        end
-    end
-
 
     % predict labels by minimizing distance (norm)
-    predlabel = zeros(M,1);
+    [pl_class,pl_pair] = detect_max(y,A,@(y,a)-d1(y,a));
 
-    cur_min= sum(y.^2,2); %distance to origin (no signal)
-    for i=0:N-p
-        for j=1:4
-            a(1,:) = A(i+1,j,:);
-            norm_vec = sum((y-a).^2,2); %distance to current a_{t,R}
-            predlabel(norm_vec<cur_min) = 1;
-            cur_min(norm_vec<cur_min) = norm_vec(norm_vec<cur_min);
-        end
-    end
-
-    % fprintf('Min norm search results in translation %d and rotation %.4f\n', min_i, Rs(min_j));
-
-    fp = sum((truelabel-predlabel)==-1)/sum(truelabel==0);
-    fn = sum((truelabel-predlabel)==1)/sum(truelabel==1);
+    C = error_matrix(tl_class,pl_class,Nc,0);
+    fp = sum(C(1,2:end)); % false positive rate
+    fn = sum(tl_class>0 & pl_class==0)/sum(tl_class>0); % false negative rate
+    % fn = sum(C(2:end,1))/sum(C(2:end,:),'all')
     
     fps(l) = fp;
     fns(l) = fn;
+    if (abs(sigma-sigma_error)<1e-14) % visualize error matrix
+        C = error_matrix(tl_class,pl_class,Nc) % error matrix for (t,R) pair
+        tr_tl_class = tl_pair(:,1)+1; % translation-only true label
+        tr_tl_class(tl_class==0) = 0; 
+        tr_pl_class = pl_pair(:,1)+1; % translation-only predicted label
+        tr_pl_class(pl_class==0) = 0;
+        Ct = error_matrix(tr_tl_class,tr_pl_class,Nt) % error matrix for translation t
+    end
     
 end
 
 tt = min(sigmas):0.01:max(sigmas);
-% b = norm(a)/2+tt.^2.*log(p_0/p_a)./norm(a); % decision boundary for x.a / ||a||
+b_near = norm(a_min)/2; % nearest decision boundary for x.a / ||a||
 
 %plot fp
-figure(2);
-% plot(tt, 1/2-1/2*erf(b./(sqrt(2).*tt)), '-', 'Linewidth', 2);
-hold on;
+figure;
+plot(tt, 1/2-1/2*erf(b_near./(sqrt(2).*tt)), '--', 'Linewidth', 2);hold on;
+plot(tt, min((1/2-1/2*erf(b_near./(sqrt(2).*tt)))*Nc,1), '--', 'Linewidth', 2);
 plot(sigmas, fps, '.', 'Markersize', 10);
 
 %plot fn
-% figure(3);
 hold on;
-% plot(tt, 1/2-1/2*erf(-(b-norm(a))./(sqrt(2).*tt)), '-', 'Linewidth', 2);
 plot(sigmas, fns, '.', 'Markersize', 10);
 xlabel('\sigma');
-% legend('expexted fp', 'actual fp', 'expexted fn', 'actual fn');
-legend('actual fp','actual fn');
+legend('LB for fp','UB for fp','actual fp','actual fn');
 % vline(sigma_show,'k:','sigma shown in fig.1');
 hold off;
