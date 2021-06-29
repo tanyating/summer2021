@@ -18,6 +18,9 @@ d = sqrt(sum((y-a).^2,2));
 
 %%%%%%%%
 function test_d1    % throw it a simple pair (p,q) with/out seed
-try, d = d1([1,2],[0,0]); catch me, ['ok: ',me.message], end
-try, d = d1([1,2],[0,0,1]); catch me, ['ok: ',me.message], end % error
-try, d = d1([1,2;3,4],[0,0]); catch me, ['ok: ',me.message], end
+d = d1([1,2;3,4],[0,0]);
+if (d(1)~=norm([1,2]) || d(2)~=norm([3,4]))
+    error('failed');
+end
+try, d = d1([1,2],[0,0,1]); catch me, ['ok: ',me.message], end
+try, d = d1([0,0],[1,2;3,4]); catch me, ['ok: ',me.message], end

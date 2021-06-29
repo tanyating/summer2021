@@ -25,8 +25,5 @@ mol = rand(q,p);
 
 %%%%%%%%
 function test_molecule    % throw it a simple pair (p,q) with/out seed
-try, mol = molecule(2,2); catch me, ['ok: ',me.message], end
-try, mol = molecule(2,2,1); catch me, ['ok: ',me.message], end
-try, mol = molecule(3,2); catch me, ['ok: ',me.message], end
-try, mol = molecule(3,2,10); catch me, ['ok: ',me.message], end
-try, mol = molecule(2,3); catch me, ['ok: ',me.message], end
+mol = molecule(3,2); if size(mol)~=[2,3], error('failed'); end % molecule with length 3 and width 2
+try, mol = molecule(2,3); catch me, ['ok: ',me.message], end % p < q, error

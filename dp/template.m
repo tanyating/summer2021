@@ -16,7 +16,6 @@ function [A,AA] = template(mol,N)
 if nargin==0, test_template; return; end
 
 p = max(size(mol)); % length of input molecule
-if (N<=1) error('N must be greater or equal to 1!'); end
 if (N<p) error('N must be greater or equal to either side of molecule!'); end
 
 Nc = (N-p+1)*4; % total number of configurations
@@ -33,7 +32,9 @@ AA = reshape(A, [Nc N]); % stack configuration vectors as rows
 
 
 %%%%%%%%
-function test_template    % throw it a random molecule with grid N
-try, A = template(rand(1,2),3); catch me, ['ok: ',me.message], end % returns A
-try, A = template(rand(1,4),3); catch me, ['ok: ',me.message], end % error since N<p
-try, [A,AA] = template(rand(1,2),3); catch me, ['ok: ',me.message], end % returns A and AA
+function test_template 
+[A,AA] = template(1,1); % simple template with N=1, and Nc=1*4=4
+if (any(A~=[1 1 1 1]) | any(AA~=[1 1 1 1]))
+    error('failed');
+end
+try, A = template(rand(1,4),3); catch me, ['ok: ',me.message], end

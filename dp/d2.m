@@ -22,6 +22,9 @@ d = yhat*transpose(ahat);
 
 %%%%%%%%
 function test_d2    % throw it a simple pair (p,q) with/out seed
-try, d = d2([1,2],[0,1]); catch me, ['ok: ',me.message], end
-try, d = d2([1,2],[0,0,1]); catch me, ['ok: ',me.message], end % error
-try, d = d2([1,2;3,4],[0,1]); catch me, ['ok: ',me.message], end
+d = d2([1,-1;-1,1],[1,-1]);
+if (abs(d(1)-1)>1e-6 || abs(d(2)+1)>1e-6)
+    error('failed');
+end
+try, d = d2([1,2],[0,0,1]); catch me, ['ok: ',me.message], end
+try, d = d2([0,0],[1,2;3,4]); catch me, ['ok: ',me.message], end
