@@ -35,15 +35,15 @@ tmp = (1-p0)/Nc; %equally likely for each configuration
 
 %assign each random vector with signal based on true label
 a = zeros(1,N);
-k=0;
+k=1;
 for i=0:N-p
     for j=1:4
         a(1,:) = A(i+1,j,:); % a_{t,R}
         
-        lb = filter>(p0+k*tmp); % probability lower bound
-        ub = filter<=(p0+(k+1)*tmp); % probability upper bound
+        lb = filter>(p0+(k-1)*tmp); % probability lower bound
+        ub = filter<=(p0+(k)*tmp); % probability upper bound
         y(lb & ub, :) = y(lb & ub, :) + a; % assign current signal
-        tl_class(lb & ub) = k+1; % assign unique class based on (i,j) pair
+        tl_class(lb & ub) = k; % assign unique class based on (i,j) pair
         tl_pair(lb & ub, 1) = i; % assign i to translation
         tl_pair(lb & ub, 2) = j; % assign j to rotation
             
