@@ -125,7 +125,11 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
     \begin{enumerate}
         \item For each label pair $[i,j]^T$, we can index by $k=i*4+j$, and index $[0,0]^T$ as $k=0$ for noise.
         \item Before normalization, each entry corresponds to the number of occurrences based on truth label and detected label ($\sum_{i}^{N_c+1}\sum_{j}^{N_c+1} C_{ij} = M$).
-        \item Normalization: divide each entry by total number of instances ($\sum_{i}^{N_c+1}\sum_{j}^{N_c+1} C_{ij} = 1$).
+        \item Normalization: 
+        \begin{itemize}
+            \item divide each entry by total number of instances ($\sum_{i}^{N_c+1}\sum_{j}^{N_c+1} C_{ij} = 1$).
+            \item normalize along each row such that for each row $i \in \{1,...,Nc+1\}$, $\sum_{j}^{N_c+1} C_{ij} = 1$
+        \end{itemize}
         \item Perfect detection corresponds to a diagonal matrix (if normalized, $C_{11}=p_0$, $C_{ii}=\frac{1-p_0}{Nc}$ for $i>1$).
         \item We can also consider translation-only error matrix. For each label pair, we only care the translation $i \in {\{0,..,N-p\}}$. To keep $i=0$ represents no molecule, we re-index the translation such that $i \in {\{1,..,N-p+1\}}$. So for the error matrix, truth/detection each have $N-p+2$ elements ${\{0,..,N-p+1\}}$.
         \item If we use the threshold prediction/detection instead of min/max "distance", each instance may get multiple predicted/detected labels. In this case, we consider each prediction of each instance as an occurrence to add in the error matrix. (We no longer normalize the matrix by number of instances $M$, since there are in total more than $M$ occurrences.)
