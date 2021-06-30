@@ -2,9 +2,11 @@ function C = error_matrix(tl_class,pl_class,Nc,image_show)
 % ERROR_MAX  Compute confusion/error matrix based on true labels of size M*1
 % and predicted labels of size M*1.
 %
-% C = error_matrix(tl_class,pl_class) returns the error matrix of size
+% C = error_matrix(tl_class,pl_class,Nc) returns the error matrix of size
 % (Nc+1)*(Nc+1), each entry Cij indicating the relative occurence
 % (frequency) of an instance with true label i, but detected with label j.
+% This means each row gives the fractions of classifications given to the
+% true label i.
 %
 % C = error_matrix(tl_class,pl_class,Nc,image_show)... also plots the error
 % matrix if image_show is true (default to be 1)
@@ -32,11 +34,14 @@ end
 C = C./sum(C,2); % normalize C along each row
 
 if (image_show)
-    figure;imagesc(C);title('Confusion matrix');colorbar; colormap(gray(256)); % visualize error matrix
+    figure;imagesc(C);title('Confusion matrix (row-normalized)');colorbar; colormap(jet(256)); % visualize error matrix
+    xlabel('pred label'); ylabel('true label');
 end
-
-
 
 
 %%%%%%%%
 function test_error_matrix
+Nc = 5;
+X = randi(Nc+1,1e3,1)-1;
+C = error_matrix(X,X,Nc);
+if norm(C-eye(Nc+1))==0, 'ok', else, error('failed'); end

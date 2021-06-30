@@ -9,9 +9,9 @@ function [y,tl_class,tl_pair] = randdata(M,A,sigma,p0)
 % true class (unique combination of translation i and rotation j indexed by {0,..,Nc}) for each
 % instance.
 %
-% [y,tl_class,tl_pair] = randdata(M,A,sigma,p0) ... also returns M*2 array
-% of true pairs of labels, each row [i,j] indicating translation i and jth
-% rotation for each instance.
+% [y,tl_class,tl_pair] = randdata(M,A,sigma,p0) ... also returns M*2 matrix
+% of true pairs of labels. Each row is a pair of the form [i,j] giving the
+% true translation index i and rot index j, for that instance.
 %
 % Without arguments, a self-test is done.
 %

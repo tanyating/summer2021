@@ -26,10 +26,11 @@ if (N==2) % 2d plot
     end
 
 elseif (N==3) % 3d plot
-    figure; clf; plot3(AA(:,1),AA(:,2),AA(:,3),'+', 'Markersize',20); axis equal; hold on; title('clean signals'); drawnow; 
+    figure; clf; plot3(AA(:,1),AA(:,2),AA(:,3),'+', 'Markersize',20); axis equal; hold on; title('clean signals'); drawnow; axis vis3d
     for i=0:Nc % iterate over each tl_class
         plot3(y(tl_class==i,1),y(tl_class==i,2),y(tl_class==i,3),'.','Markersize',10);
         hold on;
+        text(AA(:,1),AA(:,2),AA(:,3),sprintf('%d',i),'Fontsize',30);
     end
     
 else % higher dimension: visualize AA, y

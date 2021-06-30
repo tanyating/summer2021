@@ -36,5 +36,7 @@ function test_template
 [A,AA] = template(1,1); % simple template with N=1, and Nc=1*4=4
 if (any(A~=[1 1 1 1]) | any(AA~=[1 1 1 1]))
     error('failed');
+else
+  'ok'
 end
 try, A = template(rand(1,4),3); catch me, ['ok: ',me.message], end

@@ -1,6 +1,7 @@
 % ahb tweaks added 6/23/21 - you'll want to replace this by a short script
 % calling modular functions anyway.
 
+clear
 addpath('utils','dp');
 
 N = 3; %N grids = # pixels in 1D
@@ -17,8 +18,8 @@ sigmas = 0.01:0.01:2; %0.1:0.1:10; %noise
 fps = zeros(size(sigmas));
 fns = zeros(size(sigmas));
 
-sigma_show = 0.1; % noise level to plot data
-sigma_error = 2; % noise level to show error matrix
+sigma_show = 0.3; % noise level to plot data
+sigma_error =1.0; % noise level to show error matrix
 
 
 for l=1:length(sigmas)
@@ -28,6 +29,7 @@ for l=1:length(sigmas)
     M = 10000; % number of random examples
     p_0 = 0.5; % prior prob for noise (no signal)
     [y,tl_class,tl_pair] = randdata(M,A,sigma,p_0); % generate y and true labels
+    % *** suggest don't use tl_pair, instead extract from tl_class when need
     if (abs(sigma-sigma_show)<1e-14) 
         plot_data_sig(y,AA,tl_class); % plot y with clean signals
     end
@@ -49,12 +51,15 @@ for l=1:length(sigmas)
         tr_pl_class = pl_pair(:,1)+1; % translation-only predicted label
         tr_pl_class(pl_class==0) = 0;
         Ct = error_matrix(tr_tl_class,tr_pl_class,Nt) % error matrix for translation t
+        % *** write last 5 lines this way (write func get_tr, etc):   Ct = error_matrix(get_tr(tl_class),get_tr(pl_class),Nt) % error matrix for translation t
     end
     
 end
 
 tt = min(sigmas):0.01:max(sigmas);
-b_near = norm(a_min)/2; % nearest decision boundary for x.a / ||a||
+% *** fix a_min here:
+%b_near = norm(a_min)/2; % nearest decision boundary for x.a / ||a||
+b_near = 0;
 
 %plot fp
 figure;
