@@ -15,16 +15,23 @@ if (size(a,1)~=1) error('a must be of size 1*N!'); end
 if (size(y,2)~=size(a,2)) error('a and y must have same 2nd dimension'); end
 
 yhat = y-mean(y,2);
-yhat = yhat./sqrt(sum(yhat.^2,2)); % normalize each row of y
-ahat = (a-mean(a))/norm(a-mean(a)); % normalize a
+ynorm = sqrt(sum(yhat.^2,2));
+yhat = yhat(ynorm~=0,:)./ynorm(ynorm~=0,:); % normalize each row of y
+ahat = a-mean(a); 
+anorm = norm(ahat);
+if (anorm~=0) 
+    ahat = ahat/anorm; % normalize a
+end
 
 d = yhat*transpose(ahat);
 
 %%%%%%%%
-function test_d2    % throw it a simple pair (p,q) with/out seed
+function test_d2    
 d = d2([1,-1;-1,1],[1,-1]);
 if (abs(d(1)-1)>1e-6 || abs(d(2)+1)>1e-6)
     error('failed');
+else
+    'ok'
 end
 try, d = d2([1,2],[0,0,1]); catch me, ['ok: ',me.message], end
 try, d = d2([0,0],[1,2;3,4]); catch me, ['ok: ',me.message], end

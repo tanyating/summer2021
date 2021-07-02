@@ -1,5 +1,5 @@
 function C = error_matrix(tl_class,pl_class,Nc,image_show)
-% ERROR_MAX  Compute confusion/error matrix based on true labels of size M*1
+% ERROR_MATRIX  Compute confusion/error matrix based on true labels of size M*1
 % and predicted labels of size M*1.
 %
 % C = error_matrix(tl_class,pl_class,Nc) returns the error matrix of size
@@ -35,7 +35,7 @@ C = C./sum(C,2); % normalize C along each row
 
 if (image_show)
     figure;imagesc(C);title('Confusion matrix (row-normalized)');colorbar; colormap(jet(256)); % visualize error matrix
-    xlabel('pred label'); ylabel('true label');
+    xlabel('pred label'); ylabel('true label');axis equal;caxis([0 1]);
 end
 
 
