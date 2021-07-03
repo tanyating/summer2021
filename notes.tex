@@ -131,14 +131,37 @@ LDA (Linear Discriminant Analysis, $\mathbf{x}$ as input features, $l$ as output
             \item normalize along each row such that for each row $i \in \{1,...,Nc+1\}$, $\sum_{j}^{N_c+1} C_{ij} = 1$
         \end{itemize}
         \item Perfect detection corresponds to a diagonal matrix (if normalized, $C_{11}=p_0$, $C_{ii}=\frac{1-p_0}{Nc}$ for $i>1$).
-        \item We can also consider translation-only error matrix. For each label pair, we only care the translation $i \in {\{0,..,N-p\}}$. To keep $i=0$ represents no molecule, we re-index the translation such that $i \in {\{1,..,N-p+1\}}$. So for the error matrix, truth/detection each have $N-p+2$ elements ${\{0,..,N-p+1\}}$.
-        \item If we use the threshold prediction/detection instead of min/max "distance", each instance may get multiple predicted/detected labels. In this case, we consider each prediction of each instance as an occurrence to add in the error matrix. (We no longer normalize the matrix by number of instances $M$, since there are in total more than $M$ occurrences.)
-        \item Observation: 
-        \begin{itemize}
-            \item The intersection of the 1st column and 1st row $C[0,0]=tn$ is the true negative rate (noise detected as noise). 
-            \item Regardless of 1st entry, the rest of the first row is roughly the same $a=fp_noise$, which indicates some false positive rate for the noise (noise detected as signal/molecule).
-            \item Regardless of 1st entry, the rest of the first row is roughly the same $a=fp_noise$, which indicates some false positive rate for the noise (noise detected as signal/molecule).
+        \item We can also consider translation-only error matrix $C_t$. For each label pair, we only care the translation $i \in {\{0,..,N-p\}}$. To keep $i=0$ represents no molecule, we re-index the translation such that $i \in {\{1,..,N-p+1\}}$. So for the error matrix, truth/detection each have $N-p+2$ elements ${\{0,..,N-p+1\}}$.
+        \item Observation for $C_t$ (translation-wise): 
+            \begin{itemize}
+                \item The intersection of the 1st column and 1st row $C_{t}[0,0]=tn$ is the true negative rate (noise detected as noise). 
+                \item Regardless of 1st entry, the rest of the first row ($C_{t}[0,i], i \in \{1,...,N-p+1\}$) is roughly the same $a=fp\_noise$, which indicates some false positive rate for the noise (noise detected as signal/molecule).
+                \item Regardless of 1st entry, the rest of the first column ($C_{t}[i,0], i \in \{1,...,N-p+1\}$) is roughly the same $b=fn\_noise$, which indicates some false negative rate for the noise (signal/molecule detected as noise).
+                \item Regardless of the 1st row and 1st column, the rest of the matrix ($C_{t}[i,j], i,j \in \{1,...,N-p+1\}$) is a Toeplitz matrix. Focus on any row $i$, ie. true label of translation is $i$: 
+                \begin{enumerate}
+                    \item $C[i,i]$ is the true positive rate for the molecule ($tp_{mol}$) at translation $i$. 
+                    \item In an "overlapping" neighborhood of $C[i,i]$, ie. $\{C[i,j]: \lVert j-i \rVert < k\}$ where $k=\max{(p,q)}$, when the predicted signal at the predicted translation $j$ overlaps/touches the true signal at translation $i$, there are some mis-classifying rates ($fc_{j}$, "false class rate" dependent of $j$) for each predicted translation $j \neq i$.
+                    \item Outside of the overlapping region, ie. $\{C[i,j]: \lVert j-i \rVert \ge k\}$ where $k=\max{(p,q)}$, there is some similar "noise" rate ($F=fp_{mol}$, "false positive rate for molecule", independent of $j$) for every predicted translation $j$.
+                \end{enumerate}
+                \item Since the observation above works for any row $i$ (ignore 1st column and 1st row), we can only focus on the 1st and a "central" row of a single true translation. We pick the true translation row $i=\frac{N}{2}$, such that the molecule moves to the middle of the pixels and covers the largest overlapping region. We can recover the full matrix with the first row, first column with all entries the same as the 1st entry of the "central" row, and the rest of entries of other rows can be filled with the overlapping region around the true translation $i$ and noise rates else where. (see table \ref{table:1})
+            \begin {table}
+            \centering
+            \begin{tabular}{l|l|l|l|l|l|l|l}
+            Truth/Detection&$0$&...& &$i-1$&$i$&$i+1$&...\\\hline
+            $0$(No Signal)&$tn$&... &$a=fp_{noise}$&$a$&$a$&$a$& \\\hline
+            ...&$b=fn_{noise}$& & & & & & \\\hline
+            $i$&$b$&...&$F=fp_{mol}$ &$fc_{i-1}$&$tp_{mol}$&$fc_{i+1}$&$F$\\\hline
+            ...&$b$&...& & & & & \\\hline
+            
+            \end{tabular}
+            \caption{Example of translation-wise error matrix with the "central" row $i=\frac{N_t}{2}$ and molecule of $p=2$ (overlapping region at the ith row is $\{i-1,i+1\}$)}
+            \label{table:1}
+            \end{table}
+            
         \end{itemize}
+        \item The above observation can be extended to translation-rotation error matrix $C$. Since the projection for each rotation is the same at any translation, we only care about the different "error rates" from the first row and 4 more rows indicating a single "central" true translation paired up with 4 true rotations. (ie. row $[0, 0]^T, [\frac{N}{2}, 1]^T, [\frac{N}{2}, 2]^T, [\frac{N}{2}, 3]^T, [\frac{N}{2}, 4]^T$)
+        \item If we use the threshold prediction/detection instead of min/max "distance", each instance may get multiple predicted/detected labels. In this case, we consider each prediction of each instance as an occurrence to add in the error matrix. (We no longer normalize the matrix by number of instances $M$, since there are in total more than $M$ occurrences.)
+        
         
     \end{enumerate}
     
