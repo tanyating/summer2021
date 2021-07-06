@@ -4,7 +4,7 @@
 clear
 addpath('utils','dp');
 
-N = 3; %N grids = # pixels in 1D
+N = 6; %N grids = # pixels in 1D
 p = 2; %molecule length (p>=q)
 q = 2; %1 %molecule width
 Nc = (N-p+1)*4; % number of configurations (signal)
@@ -46,10 +46,11 @@ for l=1:length(sigmas)
     fns(l) = fn;
     if (abs(sigma-sigma_error)<1e-14) % visualize error matrix
         C = error_matrix(tl_class,pl_class,Nc); % error matrix for (t,R) pair
-%         C_red = error_matrix_red((tl_class),(pl_class),Nc,Nt)
+        C_red = error_matrix_red((tl_class),(pl_class),Nc,Nt) % reduced error matrix for (t,R) pair
         
         Ct = error_matrix(get_tr(tl_class),get_tr(pl_class),Nt) % error matrix for translation t
-%         Ct_red = error_matrix_red(get_tr(tl_class),get_tr(pl_class),Nt,Nt)
+        Ct_red = error_matrix_red(get_tr(tl_class),get_tr(pl_class),Nt,Nt) % error matrix for t
+        
     end
     
 end
