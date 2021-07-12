@@ -1,4 +1,4 @@
-function C_red = error_matrix_red(tl_class,pl_class,Nc,Nt)
+function C_red = error_matrix_red(tl_class,pl_class,Nc,Nt,image_show)
 % ERROR_MATRIX_RED  Compute the "reduced" version of confusion/error matrix
 % (only the different entries in the Toplitz matrix) based on true labels
 % of size M*1 and predicted labels of size M*1.
@@ -23,6 +23,9 @@ function C_red = error_matrix_red(tl_class,pl_class,Nc,Nt)
 % Tanya 6/30/21.
 
 if nargin==0, test_error_matrix_red; return; end
+if nargin<5, image_show=1; end
+
+M = length(tl_class);
 
 if (size(tl_class,1)~=size(pl_class,1)) error('Size of true labels and predicted labels should equal!'); end
 
@@ -50,12 +53,13 @@ else % translation-rotation
     end
 end
 
-
+% C_red = C_red./M; % normalize by total number of instances M
 C_red = C_red./sum(C_red,2); % normalize C along each row
 
-
-figure;imagesc(C_red);title('Reduced Confusion matrix (row-normalized)');colorbar; colormap(jet(256)); % visualize error matrix
-xlabel('pred label'); ylabel('true label');axis equal;caxis([0 1]);
+if (image_show)
+    figure;imagesc(C_red);title('Reduced Confusion matrix (row-normalized)');colorbar; colormap(jet(256)); % visualize error matrix
+    xlabel('pred label'); ylabel('true label');axis equal;caxis([0 1]);
+end
 
 
 

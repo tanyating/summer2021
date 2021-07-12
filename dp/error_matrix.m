@@ -31,6 +31,7 @@ for i=1:M % iterate over each instance
     C(tl_cur+1,pl_cur+1) = C(tl_cur+1,pl_cur+1)+1; % add to error matrix
 end
 
+% C = C./M; % normalize by total number of instances M
 C = C./sum(C,2); % normalize C along each row
 
 if (image_show)
