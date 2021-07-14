@@ -16,6 +16,7 @@
 \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
 \newcommand{\by}{\boldsymbol{y}}
 \newcommand{\ba}{\boldsymbol{a}}
+\newcommand{\R}{\mathbb{R}}
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 
@@ -37,9 +38,11 @@
     \item Model multivariate Gaussian PDF for each class $k \in \{1,..,K\}$:\\
     $p(\mathbf{x}|l=k) = \frac{1}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\mathbf{x}-\mathbf{\mu_k})}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu_k})}}$, $\mathbf{x} \in \mathbf{R}^d$\\
     given $\Sigma$ is the (within-class) covariance matrix and $\mathbf{\mu_k} = \frac{\sum_{i=1}^{i=N_k} \mathbf{x}_i}{N_k}$ from N training data $\mathbf{x}_i$ with labels. 
+    
     \item Apply Bayesian Theorem to get posterior probability: $p(\mathbf{x}, l=k) = p(\mathbf{x}|l=k) \cdot p(l=k)$, given the prior $p(l=k) = \pi_k$.
-    \item Assume two classes with $\mathbf{\mu}_1 = \mathbf{0}$ (no signal) and $\mathbf{\mu}_2 = \mathbf{a}$ (signal $\mathbf{a} \in \mathbf{R}^d$) with same covariance $\Sigma = \sigma^2 I$ (given noise $\sigma$ for each independent feature). Find decision boundary (hyperplane) between the 2 classes such that $p(\mathbf{x}|l=1)\cdot p(l=1) = p(\mathbf{x}|l=2)\cdot p(l=2)$. (Note: $\pi_1 = p(\mathbf{0})$, $\pi_2 = p(\mathbf{a})$)\\
-   
+    
+    \item Assume two classes with $\mathbf{\mu}_1 = \mathbf{0}$ (no signal) and $\mathbf{\mu}_2 = \mathbf{a}$ (signal $\mathbf{a} \in \mathbf{R}^d$) with same covariance $\Sigma = \sigma^2 I$ (given noise $\sigma$ for each independent feature). Find decision boundary (hyperplane) between the 2 classes such that $p(\mathbf{x}|l=1)\cdot p(l=1) = p(\mathbf{x}|l=2)\cdot p(l=2)$. (Note: $\pi_1 = p(\mathbf{0})$, $\pi_2 = p(\mathbf{a})$).
+    This is called the MAP (max a posterior) decision rule. Let's derive the decision boundary:
     $\frac{\pi_1}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\mathbf{x}-\mathbf{\mu}_1)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_1)}} = \frac{\pi_2}{{(2\pi)}^{\frac{d}{2}} {(det\Sigma)}^{\frac{1}{2}}} e^{-\frac{1}{2}{(\mathbf{x}-\mathbf{\mu}_2)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_2)}}$ \\\\
     $2\log{\frac{\pi_1}{\pi_2}} = {(\mathbf{x}-\mathbf{\mu}_1)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_1)} - {(\mathbf{x}-\mathbf{\mu}_2)}^T \Sigma^{-1}{(\mathbf{x}-\mathbf{\mu}_2)}$\\\\
     $2\log{\frac{\pi_1}{\pi_2}} = \frac{1}{\sigma^2}{(\mathbf{x}-\mathbf{\mu}_1)}^T I^{-1}{(\mathbf{x}-\mathbf{\mu}_1)} - \frac{1}{\sigma^2}{(\mathbf{x}-\mathbf{\mu}_2)}^T I^{-1}{(\mathbf{x}-\mathbf{\mu}_2)}$ (replace $\Sigma$ with $\sigma^2 I$)\\\\
