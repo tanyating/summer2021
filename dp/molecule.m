@@ -22,6 +22,7 @@ rng(seed); % fix seed
 
 mol = rand(q,p);
 
+%** switch option of subtract .5 -> zero mean. Make unit var also, sqrt(12) ?
 
 %%%%%%%%
 function test_molecule    % throw it a simple pair (p,q) with/out seed

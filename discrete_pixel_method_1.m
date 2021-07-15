@@ -8,7 +8,7 @@ sigma_error =1.0; % noise level to show error matrix
 N = 6; %N grids = # pixels in 1D
 ps = [2];%[10,8,7,4,9];
 qs = [2];%[2,2,3,4,3];
-norms = [1];%[1,2,3]
+norms = [1];%[1,2,3]     % three diff ways to normalize: l1,l2,linfty.
 
 k=1;
 for j=1:length(ps) % iterate thru different ratios
@@ -21,8 +21,8 @@ for j=1:length(ps) % iterate thru different ratios
 
     for i=1:length(norms) % iterate thru different norms
 
-        % normalize molecule
-        if (i==3)
+        % normalize molecule - currently this just scales the whole mol
+        if (i==3)        % *** but need to fix for row or col norm?
             mol = mol./norm(mol,inf);
         else
             mol = mol./norm(mol,i);

@@ -36,7 +36,8 @@ if (center_show)
     xlabel('pred label'); ylabel('true label');axis equal;caxis([0 1]);
 end
 
-g = (sum(overlap(:,overlap_width*4+1:overlap_width*4+4),'all')-sum(diag(overlap(:,overlap_width*4+1:overlap_width*4+4))))/(16-4); % avg rate for true t, wrong R per t
+ovtruetrans = overlap(:,overlap_width*4+1:overlap_width*4+4);   % avoids 'all'
+g = (sum(ovtruetrans(:))-sum(diag(overlap(:,overlap_width*4+1:overlap_width*4+4))))/(16-4); % avg rate for true t, wrong R per t
 h = mean(reshape(C_red(1,2:end),4,[]),2); % vector of avg fp per R (length 4 array)
 h1 = h(1); % avg fp when R=1
 h2 = h(2); % avg fp when R=2
