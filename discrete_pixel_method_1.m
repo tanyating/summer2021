@@ -1,14 +1,18 @@
 clear
 addpath('utils','dp');
 
+seed = 0; % rand seed generator
+rng(seed);
+
 sigmas = 0.01:0.01:2; %0.1:0.1:10; %noise levels
 sigma_show = 0.3; % noise level to plot data
 sigma_error =1.0; % noise level to show error matrix
 
-N = 6; %N grids = # pixels in 1D
-ps = [2];%[10,8,7,4,9];
-qs = [2];%[2,2,3,4,3];
-norms = [1];%[1,2,3]     % three diff ways to normalize: l1,l2,linfty.
+N = 24; %N grids = # pixels in 1D
+ps = [4,8];%[10,8,7,4,9];
+qs = [4,2];%[2,2,3,4,3];
+norms = [1,0]; % 0 or 1 to decide normalize the mol or not
+% norms = [1];%[1,2,3]     % three diff ways to normalize: l1,l2,linfty.
 
 k=1;
 for j=1:length(ps) % iterate thru different ratios
@@ -17,16 +21,18 @@ for j=1:length(ps) % iterate thru different ratios
     q = qs(j); %1 %molecule width
     Nc = (N-p+1)*4; % number of configurations (signal)
     Nt = N-p+1; % number of translations
-    mol = molecule(p,q); %.*randi(10,q,p); %random molecule in 2D
+    
 
-    for i=1:length(norms) % iterate thru different norms
+    for i=1:length(norms) % iterate thru different norms (normalize or not)
+        
+        mol = molecule(p,q,seed,norms(i)); %random molecule in 2D
 
         % normalize molecule - currently this just scales the whole mol
-        if (i==3)        % *** but need to fix for row or col norm?
-            mol = mol./norm(mol,inf);
-        else
-            mol = mol./norm(mol,i);
-        end
+%         if (i==3)        % *** but need to fix for row or col norm?
+%             mol = mol./norm(mol,inf);
+%         else
+%             mol = mol./norm(mol,i);
+%         end
 
         %construct a_{t,R} based on mol
         A = template(mol,N); 
@@ -35,8 +41,8 @@ for j=1:length(ps) % iterate thru different ratios
             sigma = sigmas(l);
             cov = sigma^2.*eye(N);
 
-            M = 10000; % number of random examples
-            p_0 = 1/(Nc+1); % prior prob for noise (no signal)
+            M = 2000; % number of random examples
+            p_0 = 0.5; % prior prob for noise (no signal)
             [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
 
             if (abs(sigma-sigma_show)<1e-14) 
@@ -46,16 +52,14 @@ for j=1:length(ps) % iterate thru different ratios
             % predict labels by minimizing distance (norm)
             pl_class = detect_max(y,A,@(y,a)-d1(y,a));
 
-            C = error_matrix(tl_class,pl_class,Nc,0);
-            fp = sum(C(1,2:end)); % false positive rate
+            fp = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % false positive rate
             fn = sum(tl_class>0 & pl_class==0)/sum(tl_class>0); % false negative rate
-            % fn = sum(C(2:end,1))/sum(C(2:end,:),'all')
 
             fps(k, l) = fp;
             fns(k, l) = fn;
 
-            image_show = abs(sigma-sigma_error)<1e-14;
-%             image_show = 0;
+%             image_show = abs(sigma-sigma_error)<1e-14;
+            image_show = 0;
 
             %         C = error_matrix(tl_class,pl_class,Nc,image_show); % error matrix for (t,R) pair
             C_red = error_matrix_red((tl_class),(pl_class),Nc,Nt,image_show); % reduced error matrix for (t,R) pair
@@ -100,19 +104,20 @@ for j=1:length(ps)
         hold on;
         b_near = a_min(k)/2; % nearest decision boundary for x.a / ||a||
         % plot fp
-        plot(ax, tt, 1/2-1/2*erf(b_near./(sqrt(2).*tt)), '--', 'Linewidth', 2);hold on;
-        plot(ax, tt, min((1/2-1/2*erf(b_near./(sqrt(2).*tt)))*Nc,1), '--', 'Linewidth', 2);
+%         plot(ax, tt, 1/2-1/2*erf(b_near./(sqrt(2).*tt)), '--', 'Linewidth', 2);hold on;
+%         plot(ax, tt, min((1/2-1/2*erf(b_near./(sqrt(2).*tt)))*Nc,1), '--', 'Linewidth', 2);
         plot(ax, sigmas, fps(k,:), '.', 'Markersize', 10);
         
         % plot fn
         plot(ax, sigmas, fns(k,:), '.', 'Markersize', 10);
         xlabel('\sigma');
-        legend('LB for fp','UB for fp','actual fp','actual fn');
+%         legend('LB for fp','UB for fp','actual fp','actual fn');
         % vline(sigma_show,'k:','sigma shown in fig.1');
         
         k=k+1;
     end
 end
+legend('actual fp','actual fn');
 
 
 figure;
@@ -128,7 +133,8 @@ for j=1:length(ps)
         k=k+1;
     end    
 end
-legend('tn for noise','tp per t');
+title('true rates');
+legend('c: tn for noise','d: tp per t');
 
 
 figure;
@@ -148,7 +154,8 @@ for j=1:length(ps)
         k=k+1;
     end
 end
-legend('avg fp per t (noise)','fn per t (noise)', 'avg fp per t when R=1', 'avg fp per t when R=2', 'avg fp per t when R=3','avg fp per t when R=4');
+title('false rates (molecule vs. noise)');
+legend('a: avg fp per t (noise)','b: fn per t (noise)', 'h1: avg fp per t when R=1', 'h2: avg fp per t when R=2', 'h3: avg fp per t when R=3','h4: avg fp per t when R=4');
 
 
 figure;
@@ -166,4 +173,5 @@ for j=1:length(ps)
         k=k+1;
     end
 end
-legend('avg overlapping mis-class rate per t', 'general non-overlapping mis-class rate per t', 'avg true t, wrong R rate per t');
+title('mis-classifying rates (mol vs. mol)');
+legend('e: avg overlapping mis-class rate per t', 'F: general non-overlapping mis-class rate per t', 'g: avg true t, wrong R rate per t');
