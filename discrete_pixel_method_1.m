@@ -114,6 +114,7 @@ for j=1:length(ps)
 %         legend('LB for fp','UB for fp','actual fp','actual fn');
         % vline(sigma_show,'k:','sigma shown in fig.1');
         
+        title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
         k=k+1;
     end
 end
@@ -130,11 +131,12 @@ for j=1:length(ps)
         plot(ax, sigmas, ds(k,:), '.', 'Markersize', 10);
         xlabel('\sigma');
         
+        title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
         k=k+1;
     end    
 end
-title('true rates');
-legend('c: tn for noise','d: tp per t');
+sgtitle('true rates');
+legend('c: tn for noise','d: tp per t for mol');
 
 
 figure;
@@ -151,10 +153,11 @@ for j=1:length(ps)
         plot(ax, sigmas, h4s(k,:), '.', 'Markersize', 10);
         xlabel('\sigma');
         
+        title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
         k=k+1;
     end
 end
-title('false rates (molecule vs. noise)');
+sgtitle('false rates (molecule vs. noise)');
 legend('a: avg fp per t (noise)','b: fn per t (noise)', 'h1: avg fp per t when R=1', 'h2: avg fp per t when R=2', 'h3: avg fp per t when R=3','h4: avg fp per t when R=4');
 
 
@@ -170,8 +173,9 @@ for j=1:length(ps)
         plot(ax, sigmas, gs(k,:), '.', 'Markersize', 10);
         xlabel('\sigma');
         
+        title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
         k=k+1;
     end
 end
-title('mis-classifying rates (mol vs. mol)');
+sgtitle('mis-classifying rates (mol vs. mol)');
 legend('e: avg overlapping mis-class rate per t', 'F: general non-overlapping mis-class rate per t', 'g: avg true t, wrong R rate per t');
