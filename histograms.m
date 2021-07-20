@@ -2,9 +2,9 @@ clear;
 addpath('utils','dp');
 
 
-N = 10; %N grids = # pixels in 1D
-p = 2; %molecule length (p>=q)
-q = 2; %1 %molecule width
+N = 24; %N grids = # pixels in 1D
+p = 4; %molecule length (p>=q)
+q = 4; %1 %molecule width
 Nc = (N-p+1)*4; % number of configurations (signal)
 Nt = N-p+1; % number of translations
 mol = molecule(p,q) %.*randi(10,q,p); %random molecule in 2D
