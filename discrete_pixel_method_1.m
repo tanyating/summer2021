@@ -45,9 +45,9 @@ for j=1:length(ps) % iterate thru different ratios
             p_0 = 0.5; % prior prob for noise (no signal)
             [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
 
-            if (abs(sigma-sigma_show)<1e-14) 
-                plot_data_sig(y,A,tl_class); % plot y with clean signals
-            end
+%             if (abs(sigma-sigma_show)<1e-14) 
+%                 plot_data_sig(y,A,tl_class); % plot y with clean signals
+%             end
 
             % predict labels by minimizing distance (norm)
             pl_class = detect_max(y,A,@(y,a)-d1(y,a));
@@ -64,12 +64,16 @@ for j=1:length(ps) % iterate thru different ratios
             %         C = error_matrix(tl_class,pl_class,Nc,image_show); % error matrix for (t,R) pair
             C_red = error_matrix_red((tl_class),(pl_class),Nc,Nt,image_show); % reduced error matrix for (t,R) pair
 
-            [g,h1,h2,h3,h4] = extract_C(C_red,p,Nt,image_show);
+            [g,h1,h2,h3,h4,o1,o2,o3,o4] = extract_C(C_red,p,Nt,image_show);
             gs(k,l) = g; % avg rate for true t, wrong R per t
             h1s(k,l) = h1; % avg fp when R=1
             h2s(k,l) = h2; % avg fp when R=2
             h3s(k,l) = h3; % avg fp when R=3
             h4s(k,l) = h4; % avg fp when R=4
+            o1s(k,l) = o1; % approx fn when R=1
+            o2s(k,l) = o2; % approx fn when R=2
+            o3s(k,l) = o3; % approx fn when R=3
+            o4s(k,l) = o4; % approx fn when R=4
 
             %         Ct = error_matrix(get_tr(tl_class),get_tr(pl_class),Nt,image_show); % error matrix for translation t
             Ct_red = error_matrix_red(get_tr(tl_class),get_tr(pl_class),Nt,Nt,image_show); % error matrix for t
@@ -102,7 +106,7 @@ for j=1:length(ps)
     for i=1:length(norms)
         ax = subplot(length(ps),length(norms),k);
         hold on;
-        b_near = a_min(k)/2; % nearest decision boundary for x.a / ||a||
+%         b_near = a_min(k)/2; % nearest decision boundary for x.a / ||a||
         % plot fp
 %         plot(ax, tt, 1/2-1/2*erf(b_near./(sqrt(2).*tt)), '--', 'Linewidth', 2);hold on;
 %         plot(ax, tt, min((1/2-1/2*erf(b_near./(sqrt(2).*tt)))*Nc,1), '--', 'Linewidth', 2);
@@ -146,7 +150,6 @@ for j=1:length(ps)
         ax = subplot(length(ps),length(norms),k);
         hold on;
         plot(ax, sigmas, as(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, bs(k,:), '.', 'Markersize', 10);
         plot(ax, sigmas, h1s(k,:), '.', 'Markersize', 10);
         plot(ax, sigmas, h2s(k,:), '.', 'Markersize', 10);
         plot(ax, sigmas, h3s(k,:), '.', 'Markersize', 10);
@@ -157,8 +160,28 @@ for j=1:length(ps)
         k=k+1;
     end
 end
-sgtitle('false rates (molecule vs. noise)');
-legend('a: avg fp per t (noise)','b: fn per t (noise)', 'h1: avg fp per t when R=1', 'h2: avg fp per t when R=2', 'h3: avg fp per t when R=3','h4: avg fp per t when R=4');
+sgtitle('false positive rates (molecule vs. noise)');
+legend('a: avg fp per t (noise)', 'h1: avg fp per t when R=1', 'h2: avg fp per t when R=2', 'h3: avg fp per t when R=3', 'h4: avg fp per t when R=4');
+
+figure;
+k=1;
+for j=1:length(ps)
+    for i=1:length(norms)
+        ax = subplot(length(ps),length(norms),k);
+        hold on;
+        plot(ax, sigmas, bs(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, o1s(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, o2s(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, o3s(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, o4s(k,:), '.', 'Markersize', 10);
+        xlabel('\sigma');
+        
+        title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
+        k=k+1;
+    end
+end
+sgtitle('false negative rates (molecule vs. noise)');
+legend('b: fn per t (noise)', 'o1: fn per t when R=1', 'o2: fn per t when R=2', 'o3: fn per t when R=3', 'o4: fn per t when R=4');
 
 
 figure;

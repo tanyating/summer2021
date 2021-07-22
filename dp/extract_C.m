@@ -1,4 +1,4 @@
-function [g,h1,h2,h3,h4] = extract_C(C_red,p,Nt,center_show)
+function [g,h1,h2,h3,h4,o1,o2,o3,o4] = extract_C(C_red,p,Nt,center_show)
 % EXTRACT-CT  Extracts different error rates per translation-rotation pair
 % from the reduced confusion matrix C given the maximum length of the
 % molecule p, and the total number of translations Nt=N-p+1.
@@ -7,7 +7,11 @@ function [g,h1,h2,h3,h4] = extract_C(C_red,p,Nt,center_show)
 % h1 as average false positive rate when predicted R=1,
 % h2 as average false positive rate when predicted R=2,
 % h3 as average false positive rate when predicted R=3,
-% h4 as average false positive rate when predicted R=4.
+% h4 as average false positive rate when predicted R=4,
+% o1 as approximate false negative rate when predicted R=1,
+% o2 as approximate false negative rate when predicted R=2,
+% o3 as approximate false negative rate when predicted R=3,
+% o4 as approximate false negative rate when predicted R=4.
 %
 % If the flag center_show is set to 1 (default to be 0), the function also plots the error
 % matrix for the the central translation with 4 rotations (overlapped
@@ -43,6 +47,10 @@ h1 = h(1); % avg fp when R=1
 h2 = h(2); % avg fp when R=2
 h3 = h(3); % avg fp when R=3
 h4 = h(4); % avg fp when R=4
+o1 = C_red(2,1); % approx fn when R=1
+o2 = C_red(3,1); % approx fn when R=1
+o3 = C_red(4,1); % approx fn when R=1
+o4 = C_red(5,1); % approx fn when R=1
 
 
 %%%%%%%%
