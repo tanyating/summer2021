@@ -1,6 +1,10 @@
 clear
 addpath('utils','dp');
 
+% PS you'll find it easier to make user flags to control which figs
+% produced, or, better: make separate functions to do plots of a certain
+% type, reading the generated data arrays.
+
 seed = 0; % rand seed generator
 rng(seed);
 

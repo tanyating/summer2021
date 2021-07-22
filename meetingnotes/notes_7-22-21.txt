@@ -1,0 +1,44 @@
+
+Tanya findings:
+
+* 8x2 has higher FP than 4x4 in meth1.
+* meth2 has worse FN (10x) than meth1, but better FP (Manas).
+* norm-case: fat has higher FP than tall.
+
+Thoughts:
+
+40x40 vs 80x20  should distinguish much better than 4x4 and 8x2
+
+=> For small mol's need to average over perf results!
+
+meth2 matches Rickgauer's, but we need to check w/ them -> have mtg.
+
+always choose norm=1 (mol entries ~ unif zero mean, var=1)
+
+
+Questions:
+
+1) in expectation over mol samples, is FP rate higher for 4x4 or 8x2 (in fat or tall orientations) ?
+Or, all the same?  Assume N(0,1) for mol entries.
+For method1 (dist = sum of squares).   exp(-dist) doesn't matter, since method just compares dists.
+Should be tractable analysis since comparing sums and squares of N(0,1) variables.
+Can check by running many random mols.
+
+2) meth1 vs meth2 (with threshold tau where FN=FP rates). Which has better performance?
+Ans for 4x4 and 8x2.   Perf should be averaged over mol seeds too (or go to much larger single mol's).
+KEY for presenting to Niko.
+
+3)
+ROC curves: (look up wiki).
+plot (for a single sigma),
+performance as (FP, 1-FN=TP) in [0,1]^2. Closer to top-left, better.  (area under ROC curve ->1
+is best).  Can compare various methods.
+Sweep tau and plot curve, ROC = receiver operating curve.
+We have different types of TP: i) correct-translation (t), any-rot
+                               ii) correct (t,r)   ... do this first
+
+Plot one ROC curve for each molecule (4x4, 8x2), and one for each sigma level (picking =1 fine
+to begin with).
+KEY for presenting to Niko.
+
+

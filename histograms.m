@@ -1,6 +1,9 @@
 clear;
 addpath('utils','dp');
 
+raw = 1;   % AHB added: 0: use best dist as in meth2,   1: use all dists (Manas) giving tail as in Rickgauer Fig 1e.
+
+seed =  0; rng(seed);
 
 N = 24; %N grids = # pixels in 1D
 p = 4; %molecule length (p>=q)
@@ -13,7 +16,7 @@ mol = molecule(p,q) %.*randi(10,q,p); %random molecule in 2D
 A = template(mol,N); 
 
 M = 20000; %number of noise vectors
-sigma = 0.1; %level of noise
+sigma = 1; %level of noise
 cov = sigma^2.*eye(N);
 p_0 = 0.5; % prior prob for noise (no signal)
 [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
@@ -25,10 +28,14 @@ M2 = length(y); % number of positive instances
 
 x_d1s = zeros(M1,N-p+1,4); % d1: |x-a_{t,R}| for noise x 
 x_d2s = zeros(M1,N-p+1,4); % d2: <xhat,a_{t,R}hat> for noise x
+
+y_d2s = zeros(M2,N-p+1,4); % d2: <xhat,a_{t,R}hat> for noise x   for MANAS
+
 x_fs = zeros(M1,N-p+1); % method 3: f(t) = max_R <xhat,a_{t,R}hat> for noise x
 x_js = zeros(M1,N-p+1); % method 4 for noise x
 
 y_fs = zeros(M2,N-p+1); % method 3: f(t) for signals y
+
 
 a = zeros(1,N);
 ahat = zeros(1,N);
@@ -40,6 +47,7 @@ for i=0:N-p
        a(1,:) = A(k,:);
        x_d1s(:,i+1,j) = d1(x,a); %distance to current a_{t,R}
        x_d2s(:,i+1,j) = d2(x,a); %inner product <xhat,a_{t,R}hat>
+       y_d2s(:,i+1,j) = d2(y,a); %inner product <xhat,a_{t,R}hat>  for MANAS
        x_cur_prod(:,j) = d2(x,a);
        y_cur_prod(:,j) = d2(y,a);
    end
@@ -84,10 +92,15 @@ nbins=100;
 % title('j(t)');
 
 figure;
-histogram(max(x_fs,[],2),nbins);
-hold on;
-histogram(max(y_fs,[],2),nbins);
-title('max inner product');
+if raw
+  histogram(x_d2s(:),nbins); hold on;
+  histogram(y_d2s(:),nbins);
+  title('all inner products');
+else
+  histogram(max(x_fs,[],2),nbins); hold on;
+  histogram(max(y_fs,[],2),nbins);
+  title('max inner product');
+end
 legend('no signal', 'signal');
 
 
