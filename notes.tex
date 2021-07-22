@@ -148,6 +148,10 @@
 \subsection{Set-up}
 \begin{itemize}
     \item Molecule: Assume there's some molecule $m \in \R^{p \times q}$ ($p\ge q$) in 2-D, with 1-D projection onto $N$ number of pixels. The molecule $m$ has $N-p+1$ translations $t \in \{0,1,2,...,N-p\}$, and 4 rotations $R \in \{0, \frac{\pi}{2}, \pi, \frac{3\pi}{2}\}$ at every discrete position. For each instance (1-D projection) $\mathbf{y} \in \R^N$, each component $y^i$ of $\mathbf{y}$ represents the sum along the ith column. In total, there are $N_c = 4\times(N-p+1)$ configurations (set of translations and rotations) for signals (ie. molecule detected). 
+    \begin{itemize}
+        \item We can construct random molecule of size $p\times q$ by drawing random entries from the standard uniform distribution $U(0,1)$ for each $m_{ij}$. 
+        \item Normalize the molecule: for the random entries drawn from the standard uniform distribution, we can normalize it to mean 0 and unit variance.
+    \end{itemize}
     \item Template: Given a molecule $m$, we can generate a set of templates $A \in \R^{N_c \times N}$ such that each row $A(k,:) \in \R^N = a_{t=i, R=(j-1)\frac{\pi}{2}}$ represents a projected signal with certain translation ($i \in {0,..,N-p}$) and rotation ($j \in {1,..,4}$). (We index each unique pair of translation $i$ and rotation $j$ as a positive class $k=i+4\cdot j$, and $0$ represents the no molecule case.)
     \item Random (input) data with noise:
     \begin{enumerate}
@@ -255,17 +259,59 @@
                     $[\ceil{\frac{N}{2}}, 4]^T$ ($t=\ceil{\frac{N}{2}},R=\frac{3\pi}{2}$)& & &...&Correct\\\hline
                 \end{tabular}
                 
-                \item Average false negative rate per rotation: Focus on the 1st row of ("reduced") $C$, ignore the 1st entry ($C_{11}$ is detected true noise), each entry of the rest ($C_{1j}$, $j>1$) is some false positive rate when the noise is detected as a molecule with a pair of translation and rotation. Since observation above shows that each translation is the same, the false positive rate for every translation and a rotation should be the same. (ie. the false positive rates along the row should repeat every 4 columns) So we can compute the average false negative rate at rotation $j$ as $h_j = \frac{\sum_{n=0} C_{i, 1+4n + j}}{\frac{N_c}{4}}=\frac{\sum_{n=0} C_{i, 1+4n + j}}{N_t}$.
+                \item Average false positive rate per rotation: Focus on the 1st row of ("reduced") $C$, ignore the 1st entry ($C_{11}$ is detected true noise), each entry of the rest ($C_{1j}$, $j>1$) is some false positive rate when the noise is detected as a molecule with a pair of translation and rotation. Since observation above shows that each translation is the same, the false positive rate for every translation and a rotation should be the same. (ie. the false positive rates along the row should repeat every 4 columns) So we can compute the average false negative rate at rotation $j$ as $h_j = \frac{\sum_{n=0} C_{i, 1+4n + j}}{\frac{N_c}{4}}=\frac{\sum_{n=0} C_{i, 1+4n + j}}{N_t}$.
                 
                 \begin{tabular}{l|l|l|l|l|l|l|l|l|l}
                     Truth/Detection&$[0, 1]^T$&$[0, 2]^T$&$[0, 3]^T$&$[0, 4]^T$&$[1, 1]^T$&$[1, 2]^T$&$[1, 3]^T$&$[1, 4]^T$&...\\\hline
                     $0$ (No Signal)&$h_1$&$h_2$&$h_3$&$h_4$&$h_1$&$h_2$&$h_3$&$h_4$&... \\\hline
                 \end{tabular}
                 
+                \item Approximate false negative rate per rotation: Focus on the 1st column of ("reduced") $C$, ignore the 1st entry ($C_{11}$ is detected true noise), each entry of the rest ($C_{i1}$, $i>1$) is some false negative rate when a molecule with "central" translation and some rotation is detected as noise. So we can compute the average false negative rate at rotation $j \in \{1,...,4\}$ as $o_j = C_{j+1, 1}$. (View the below vector as a transpose of the desired column)
+                
+                \begin{tabular}{l|l|l|l|l|l|l|l|l|l}
+                    Detection/Truth&$[\ceil{\frac{N}{2}}, 1]^T$&$[\ceil{\frac{N}{2}}, 2]^T$&$[\ceil{\frac{N}{2}}, 3]^T$&$[\ceil{\frac{N}{2}}, 4]^T$\\\hline
+                    $0$ (No Signal)&$o_1$&$o_2$&$o_3$&$o_4$\\\hline
+                \end{tabular}
+                
             \end{enumerate}
             
         \end{enumerate}
+    
+    
+    \subsubsection{Extract Error Rates and Compare}
+    Extract the distinct error rates from above confusion matrices (reduced $C$ and $C_t$) and compare across whether or not normalize the molecule, different ratios of molecule size ($\frac{p}{q}$), and different methods to detect.
+    
+    \begin{enumerate}
+        \item Use method 1 ($\min_{t,R} d_{1}(\by_i,\mathbf{a}_{t,R})$), compare across whether or not normalize the molecule and molecule size ($[p,q] \in \{[4,4], [8,2]\}$)
         
+        \begin{itemize}
+        
+            \item General False (positive/negative) rates (mol vs. noise)
+            \begin{enumerate}
+                \item Un-normalized molecule tends to have lower general $fp$ than normalized molecule, $F$. ie. Normalized molecule are more likely to be mistakenly detected as molecule.
+                \item $8\times 2$ molecule tends to have higher general $fp$ than $4\times 4$ molecule. ie. high-ratio molecule are more likely to be detected as noise.
+            \end{enumerate}
+        
+            \item False Positive rates per rotation R (mol vs. noise)
+            \begin{enumerate}
+                \item For $4\times 4$ square molecule, normalized molecule tends to have higher $fp$ when $R=1,3$ (when un-normalized, $fp$ at $R=1,3$ is close to $R=2,4$). ie. when normalized, square matrix are more likely to detect as noise at fat rotation.
+                \item For $8\times 2$ square molecule, un-normalized molecule tends to have higher $fp$ when $R=1,3$
+            \end{enumerate}
+            
+            \item False Negative rates per rotation R (mol vs. noise)
+            \begin{enumerate}
+                \item For $4\times 4$ square molecule, normalized molecule tends to have higher $fn$ when $R=1,3$ (when un-normalized, $fn$ at $R=1,3$ is close to $R=2,4$). ie. when normalized, noise is more likely to detect as a square molecule at fat rotation.
+                \item For $8\times 2$ square molecule, un-normalized molecule tends to have higher $fn$ when $R=1,3$
+            \end{enumerate}
+        
+            \item Mis-classifying rates (mol vs. mol)
+            \begin{enumerate}
+                \item For every true translation, un-normalized molecule tends to have higher $g$ and lower $e$, $F$ than normalized molecule. ie. Un-normalized molecule are more likely to get true translation.
+                \item For every true translation, $8\times 2$ molecule tends to have higher $F$ than $4\times 4$ molecule. ie. high-ratio molecule are more likely to be detected with non-overlapping translation.
+            \end{enumerate}
+        \end{itemize}
+        
+    \end{enumerate}
 
 \subsection{Histogram study}
 Let $\epsilon_{\sigma}^{i}  \in \mathbb{R}^{N}$, $i=1,2,\ldots M$, denote iid noise vectors with in $\mathbb{R}^{N}$ with mean $0$ and variance $\sigma^2$ as before. (Based on the the approximate distribution of $d(\epsilon_{\sigma}^i, \ba_{t,R})$ and a threshold $\tau$, we can preview the approximate false positive rate by adding up the relative-frequencies for $d>\tau$.)
