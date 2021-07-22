@@ -5,12 +5,14 @@ N = 35; %14; %N grids = # pixels in 1D
 ps = [4,8]; %2; %molecule length (p>=q)
 qs = [4,2]; %2; %1 %molecule width
 
+seed =0;   %  matters!
+
 for j=1:length(ps) % different ratios
     p = ps(j);
     q = qs(j);
     for i=[1,0] % normalize mol or not
 
-        mol = molecule(p,q,0,i); %random molecule in 2D
+      mol = molecule(p,q,seed,i); %random molecule in 2D
         % figure;imagesc(mol);title('molecule');colorbar; colormap(jet(256)); % visualize molecule
         
         %construct a_{t,R} based on mol

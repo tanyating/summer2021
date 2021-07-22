@@ -1,7 +1,7 @@
 clear
 addpath('utils','dp');
 
-seed = 0; % rand seed generator
+seed = 1; % 0;   % rand seed generator
 rng(seed);
 
 sigmas = 0.01:0.01:2; %0.1:0.1:10; %noise levels
@@ -136,6 +136,7 @@ for j=1:length(ps)
     end    
 end
 sgtitle('true rates');
+
 legend('c: tn for noise','d: tp per t for mol');
 
 
