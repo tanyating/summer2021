@@ -278,9 +278,38 @@
         \end{enumerate}
     
     
-    \subsubsection{Extract Error Rates and Compare}
-    Extract the distinct error rates from above confusion matrices (reduced $C$ and $C_t$) and compare across whether or not normalize the molecule, different ratios of molecule size ($\frac{p}{q}$), and different methods to detect.
+    \subsubsection{Analysis and Comparison}
     
+    
+    \begin{itemize}
+        \item Expectation\\
+        Prop: For method 1, in expectation over (normalized) molecule samples (different seeds of random generator), FP rate is the same for $4\times 4$ and $8\times 2$ (in both fat $8\times 2$ and tall $2\times 8$ orientations) molecules. (Assume N(0,1) for mol entries.)\\
+        
+        Proof:
+        Assume noise (no signal) vector $\mathbf{\epsilon} \in \R^N$ with noise level $\sigma$, ie. $\mathbf{\epsilon}_i = N(0,\sigma^2)$.\\
+        For a square $4\times 4$ molecule $m$, each rotation is the same (each translation is also the same as shown above). So assume a single projected template $\ba \in \R^N$, such that $\ba_{t+j-1} = \sum_{i=1}^4 m_{ij} = \sum_{i=1}^4 N(0,1)$ for $j = 1,..,4$ and $t$ is some translation along N pixels, and the other entries are 0 (ie. a vector $[0,0,...,N(0,4), N(0,4), N(0,4), N(0,4),0,...,0] \in \R^N$). \\
+        
+        $d_{1}(\mathbf{\epsilon}, \ba) = \sum_{j=1}^4 {(\ba_{t+j-1} - \mathbf{\epsilon}_{t-j+1})}^2 + (N-4)\cdot {(\mathbf{\epsilon}_i)}^2$ \\\\
+        $= 4 \cdot {(N(0,4)-N(0,\sigma^2))}^2 + (N-4) \cdot {(N(0,\sigma^2))}^2$\\\\
+        $= 4 \cdot (4+\sigma^2)\cdot \chi_1^2 + (N-4)\sigma^2 \cdot \chi_1^2$\\\\
+        $= (16 + N\sigma^2) \cdot \chi_1^2$\\\\
+        $\mathbb{E} [(16 + N\sigma^2) \cdot \chi_1^2] = 16 + N\sigma^2$\\
+        
+        Similarly, if we go to the fat molecule $m_{2 \times 8}$,\\
+        $d_{1}(\mathbf{\epsilon}, \ba) = \sum_{j=1}^8 {(\ba_{t+j-1} - \mathbf{\epsilon}_{t-j+1})}^2 + (N-8)\cdot {(\mathbf{\epsilon}_i)}^2$ \\\\
+        $= 8 \cdot {(N(0,2)-N(0,\sigma^2))}^2 + (N-8) \cdot {(N(0,\sigma^2))}^2$\\\\
+        $= 8 \cdot (2+\sigma^2)\cdot \chi_1^2 + (N-2)\sigma^2 \cdot \chi_1^2$\\\\
+        $= (16 + N\sigma^2) \cdot \chi_1^2$\\\\
+        $\mathbb{E} [(16 + N\sigma^2) \cdot \chi_1^2] = 16 + N\sigma^2$\\
+        
+        Same for the tall molecule $m_{8 \times 2}$,\\
+        $d_{1}(\mathbf{\epsilon}, \ba) = \sum_{j=1}^2 {(\ba_{t+j-1} - \mathbf{\epsilon}_{t-j+1})}^2 + (N-2)\cdot {(\mathbf{\epsilon}_i)}^2 = (16 + N\sigma^2) \cdot \chi_1^2$\\\\
+        $\mathbb{E} [(16 + N\sigma^2) \cdot \chi_1^2] = 16 + N\sigma^2$\\
+        
+        Since method 1 minimizes $d_{1}$ to get the predicted label, and here expectedly $d_{1}$ is the same between the noise and all shape of molecules, then supposedly the false positive rate to detect the noise as any of the molecule should be the same.
+    
+        \item Extract error rates and compare\\
+        Extract the distinct error rates from above confusion matrices (reduced $C$ and $C_t$) and compare across whether or not normalize the molecule, different ratios of molecule size ($\frac{p}{q}$), and different methods to detect.
     \begin{enumerate}
         \item Use method 1 ($\min_{t,R} d_{1}(\by_i,\mathbf{a}_{t,R})$), compare across whether or not normalize the molecule and molecule size ($[p,q] \in \{[4,4], [8,2]\}$)
         
@@ -312,6 +341,8 @@
         \end{itemize}
         
     \end{enumerate}
+    
+    \end{itemize}
 
 \subsection{Histogram study}
 Let $\epsilon_{\sigma}^{i}  \in \mathbb{R}^{N}$, $i=1,2,\ldots M$, denote iid noise vectors with in $\mathbb{R}^{N}$ with mean $0$ and variance $\sigma^2$ as before. (Based on the the approximate distribution of $d(\epsilon_{\sigma}^i, \ba_{t,R})$ and a threshold $\tau$, we can preview the approximate false positive rate by adding up the relative-frequencies for $d>\tau$.)
