@@ -1,0 +1,82 @@
+
+Tanya plan:
+Wed Aug 4 usual mtg, finalize things for Thurs 2-3 or 4-5 mtg w/ Niko/Pilar.
+
+bash out some slides to explain to Niko/Pilar: explain our discrete model,
+signal vecs y, a.  (make couple of pics).
+2 detection methods.
+ROC results for the two methods, as in 2A-C below.
+PS beamer+latex for slides.
+
+
+
+details:
+
+
+1) theory for expected FP rate (expectation over both mol & noise),
+for meth 1 (max-lik = LDA):
+
+only need consider compts of y in supp of mol.
+
+Consider p=q=2: a1 ~ a2 ~ N(0,2)
+N>2 arbitrary, since only the 2 pixels in supp(a) matter.
+Then EFPR = (norm consts for Gaussians) .
+int_{(a,y) in D} exp(-||a||^2/4) exp(-||y||^2/2sigma^2) da dy
+
+over domain D := {a1 y1 + a2 y2 >= ||a||^2/2}
+
+In the p=q=1 case we had an integral of axis-aligned MV Gaussian over
+double-cone region as in pencil notes.
+
+use rot invar (in a, and also in y), to try and write as 1d integral
+(worst case: use MATLAB integrate...)
+
+Compare p*q =   2x2    vs  4x1  vs 1x4    EFPR's.   (3 1D integrals)
+
+Continue!...  (but not a priority for Niko as much as 2A-C below).
+Manas may have the integral. Don't worry too much about this.
+
+
+2) ROC curves for meth2:
+
+* fig 3,4 similar -> once gets the right t, the rotation is ok.
+(sigma=1 which is same as mol)
+
+2A)
+* can make variants of ROC plots for FP rate restricted to one or other
+orientation?  (2 curves on same ROC plot, color-coded by orientation).
+   - Look at data - does FP rate depend on orientation?
+
+normalizing FP? send in *all* noise, measure frac of times get detected
+mol at orientation 1,3 = FP_{tall}.
+ or at orientation 2,4 = FP_{fat}.
+FP_tot = sum of two above. Let's plot these on Fig. 1 of discret_meth_2.m:
+splitting y-extent into two components for FP.
+
+[You can still send in half noise, half true signals, then frac of times when
+sent in noise and got detected mol.] -> already doing.
+
+2B)
+plot TP rate per orientation (tall, fat) TP_{tall}
+overall TP rate (as if) sent in all signal (equi over 4 rots),
+frac of those that get correct (t,r).
+frac of those that get correct (t) and any r.
+
+2C) then add to the cigar-mol ROC curves:
+ROC curves to plot (2 curves on same plot, one for each detection orientation):
+TP_{tall} (frac correct of tall sent in) vs FP_{tall}
+TP_{fat} (frac correct of fat sent in) vs FP_{fat}
+want both these curves to be close to top-left of ROC curve.
+
+Do this only for 1 random seed for now - since otherwise all washes out.
+We realised that the best tau probably depends on the particular mol matrix,
+so averaging the ROC over mol seeds is not representative of the experiments.
+
+Thus try for larger, 8x8 vs 16x2, 1 random seed mol.
+
+
+Will tell us whether to test...
+3) meth3 = meth2 but with tau_tall, tau_fat  = 2 distinct thresholds,
+chosen for that particular mol.
+
+
