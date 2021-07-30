@@ -5,14 +5,28 @@ addpath('utils','dp');
 % produced, or, better: make separate functions to do plots of a certain
 % type, reading the generated data arrays.
 
-seeds = 0:10;
-sigma = 1;
+seed = 0;
+rng(seed);
 
-N = 24; %N grids = # pixels in 1D
-ps = [4,8];%[10,8,7,4,9];
-qs = [4,2];%[2,2,3,4,3];
+sigma = 2;
+
+N = 48; %N grids = # pixels in 1D
+ps = [8,16];%[10,8,7,4,9];
+qs = [8,4];%[2,2,3,4,3];
 taos = 0.2:0.01:0.8; % 0 or 1 to decide normalize the mol or not
 % norms = [1];%[1,2,3]     % three diff ways to normalize: l1,l2,linfty.
+
+tao_picks = [0.44 0.44]; % optimal threshold for overall fp vs. fn
+i_picks = (tao_picks-taos(1))./0.01 + 1;
+i_picks = int16(i_picks);
+
+fat_tao_picks = [0.4 0.4]; % optimal threshold for fat fp vs. fn
+fat_i_picks = (fat_tao_picks-taos(1))./0.01 + 1;
+fat_i_picks = int16(fat_i_picks);
+
+tall_tao_picks = [0.49 0.44]; % optimal threshold for tall fp vs. fn
+tall_i_picks = (tall_tao_picks-taos(1))./0.01 + 1;
+tall_i_picks = int16(tall_i_picks);
 
 k=1;
 for j=1:length(ps) % iterate thru different ratios
@@ -25,17 +39,6 @@ for j=1:length(ps) % iterate thru different ratios
 
     for i=1:length(taos) % iterate thru different norms (normalize or not)
         
-        
-        fps = zeros(1,length(seeds));
-        fns = zeros(1,length(seeds));
-        tps = zeros(1,length(seeds));
-        ds = zeros(1,length(seeds));
-        
-        for l=1:length(seeds)
-            
-            seed = seeds(l); % rand seed generator
-            rng(seed);
-            
             mol = molecule(p,q,seed); %random molecule in 2D
             tao = taos(i); % threshold
             
@@ -49,71 +52,31 @@ for j=1:length(ps) % iterate thru different ratios
             M = 2000; % number of random examples
             p_0 = 0.5; % prior prob for noise (no signal)
             [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
-            
-            %             if (abs(sigma-sigma_show)<1e-14)
-            %                 plot_data_sig(y,A,tl_class); % plot y with clean signals
-            %             end
+            tl_pairs = inverse_map(tl_class);
             
             % predict labels by maximizing <ahat, yhat> with threshold
             pl_class = detect_max(y,A,@(y,a)d2(y,a),tao);
+            pl_pairs = inverse_map(pl_class);
             
-            fp = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % false positive rate
-            fn = sum(tl_class>0 & pl_class==0)/sum(tl_class>0); % false negative rate
-            tp = sum(tl_class>0 & pl_class==tl_class)/sum(tl_class>0); % correct rate
+            fps(j,i) = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % fp rate
+            fat_fps(j,i) = sum(tl_class==0 & (pl_pairs(:,2)==1 | pl_pairs(:,2)==3))/sum(tl_class==0); % fat fp rate
+            tall_fps(j,i) = sum(tl_class==0 & (pl_pairs(:,2)==2 | pl_pairs(:,2)==4))/sum(tl_class==0); % tall fp rate
             
-            fps(l) = fp;
-            fns(l) = fn;
-            tps(l) = tp;
             
-            %             image_show = abs(sigma-sigma_error)<1e-14;
-            image_show = 0;
+            tp1s(j,i) = sum(tl_class>0 & pl_class>0)/sum(tl_class>0); % overall tp rate
+            fat_tp1s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & pl_class>0)/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat tp rate
+            tall_tp1s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & pl_class>0)/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall tp rate
             
-            %         C = error_matrix(tl_class,pl_class,Nc,image_show); % error matrix for (t,R) pair
-            %         C_red = error_matrix_red((tl_class),(pl_class),Nc,Nt,image_show); % reduced error matrix for (t,R) pair
+            tp2s(j,i) = sum(tl_class>0 & (pl_class==tl_class))/sum(tl_class>0); % correct (t,R) rate
+            fat_tp2s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_class==tl_class))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
+            tall_tp2s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_class==tl_class))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
             
-            %         [g,h1,h2,h3,h4,o1,o2,o3,o4,r] = extract_C(C_red,p,Nt,image_show);
-            %         gs(k) = g; % avg rate for true t, wrong R per t
-            %         h1s(k) = h1; % avg fp when R=1
-            %         h2s(k) = h2; % avg fp when R=2
-            %         h3s(k) = h3; % avg fp when R=3
-            %         h4s(k) = h4; % avg fp when R=4
-            %         o1s(k) = o1; % approx fn when R=1
-            %         o2s(k) = o2; % approx fn when R=2
-            %         o3s(k) = o3; % approx fn when R=3
-            %         o4s(k) = o4; % approx fn when R=4
-            %         rs(j,i) = r; % avg correct (t,R)
+            tp3s(j,i) = sum(tl_class>0 & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_class>0); % correct t rate
+            fat_tp3s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
+            tall_tp3s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
             
-            %         Ct = error_matrix(get_tr(tl_class),get_tr(pl_class),Nt,image_show); % error matrix for translation t
-            Ct_red = error_matrix_red(get_tr(tl_class),get_tr(pl_class),Nt,Nt,image_show); % error matrix for t
-            
-            % extract error rates from Ct_red
-            [a,b,c,d,e,F] = extract_Ct(Ct_red,p);
-            %
-            %         cs(k) = c; % tn for noise
-            ds(l) = d; % tp per translation
-%             as(j,i) = a; % avg fp per translation
-%             bs(j,i) = b; % fn per translation
-            
-        end
-        
-        dmean(j,i) = mean(ds);
-        fpmean(j,i) = mean(fps);
-        fnmean(j,i) = mean(fns);
-        tpmean(j,i) = mean(tps);
-        
-        if ((tao==0.52 && j==1) || (tao==0.51 && j==2))
-            fp_show(j) = fpmean(j,i);
-            fn_show(j) = fnmean(j,i);
-            tp_show(j) = tpmean(j,i);
-            d_show(j) = dmean(j,i);
-        end
-        
-%         es(k) = e; % avg misclassifing rate (overlapping) per translation
-%         Fs(k) = F; % noise rate (non-overlapping) per translation
-% 
-%         a_min(k) = min(sqrt(sum(A.^2,2))); % store nearest signal to the origin
-%         k = k+1;
-         
+
+
     end
 
 end
@@ -121,52 +84,168 @@ end
 figure;
 k=1;
 for j=1:length(ps)
-    ax = subplot(length(ps),1,j);
+    ax = subplot(length(ps),3,k);
     hold on;
-    plot(taos,fpmean(j,:), '.', 'Markersize', 10);
-    plot(taos,fnmean(j,:), '.', 'Markersize', 10);
-    xlabel('tao');
-    title(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigma));
+    plot(taos,fps(j,:), '.', 'Markersize', 10);
+    plot(taos,fat_fps(j,:), '.', 'Markersize', 10);
+    plot(taos,tall_fps(j,:), '.', 'Markersize', 10);
+    plot(taos,1-tp1s(j,:), '.', 'Markersize', 10);
+    xlabel(sprintf('tao (p=%d q=%d sigma=%.2f)', ps(j),qs(j),sigma));
+    title('Overall mol');
+    legend('overall fp','fat fp','tall fp','overall fn');
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(taos,fat_fps(j,:), '.', 'Markersize', 10);
+    plot(taos,1-fat_tp1s(j,:), '.', 'Markersize', 10);
+    xlabel(sprintf('tao (p=%d q=%d sigma=%.2f)', ps(j),qs(j),sigma));
+    title('Fat mol');
+    legend('fat fp','fat fn');
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(taos,tall_fps(j,:), '.', 'Markersize', 10);
+    plot(taos,1-tall_tp1s(j,:), '.', 'Markersize', 10);
+    xlabel(sprintf('tao (p=%d q=%d sigma=%.2f)', ps(j),qs(j),sigma));
+    title('Tall mol');
+    legend('tall fp','tall fn');
+    k=k+1;
 end
-legend('actual fp','actual fn');
+% legend('overall fp','fat fp','tall fp','overall fn')
+% legend('overall fp','fat fp','tall fp','overall fn','fat fn','tall fn');
 
 figure;
 k=1;
 for j=1:length(ps)
-    ax = subplot(length(ps),1,j);
+    ax = subplot(length(ps),3,k);
     hold on;
-    plot(fpmean(j,:), 1-fnmean(j,:),'.', 'Markersize', 10);
+    plot(taos,tp1s(j,:), '.', 'Markersize', 10);
+    plot(taos,fat_tp1s(j,:), '.', 'Markersize', 10);
+    plot(taos,tall_tp1s(j,:), '.', 'Markersize', 10);
+    xlabel(sprintf('tao (p=%d q=%d sigma=%.2f)', ps(j),qs(j),sigma));
+    title('general TP rates');
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(taos,tp2s(j,:), '.', 'Markersize', 10);
+    plot(taos,fat_tp2s(j,:), '.', 'Markersize', 10);
+    plot(taos,tall_tp2s(j,:), '.', 'Markersize', 10);
+    xlabel(sprintf('tao (p=%d q=%d sigma=%.2f)', ps(j),qs(j),sigma));
+    title('correct (t,R) rates');
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(taos,tp3s(j,:), '.', 'Markersize', 10);
+    plot(taos,fat_tp3s(j,:), '.', 'Markersize', 10);
+    plot(taos,tall_tp3s(j,:), '.', 'Markersize', 10);
+    xlabel(sprintf('tao (p=%d q=%d sigma=%.2f)', ps(j),qs(j),sigma));
+    title('correct t rates');
+    k=k+1;
+end
+sgtitle('TP rates');
+legend('overall','fat','tall');
+
+figure;
+k=1;
+for j=1:length(ps)
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(fps(j,:), tp1s(j,:),'.', 'Markersize', 10);
+    plot(fat_fps(j,:), fat_tp1s(j,:),'.', 'Markersize', 10);
+    plot(tall_fps(j,:), tall_tp1s(j,:),'.', 'Markersize', 10);
     xx=0:0.01:1;
     plot(xx,xx);
     xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigma));
     title('ROC (general fp, general tp)');
-    plot(fp_show(j), 1-fn_show(j),'s', 'Markersize', 15) % desired tao
-end
-
-figure;
-k=1;
-for j=1:length(ps)
-    ax = subplot(length(ps),1,j);
+    
+    % desired tao
+    plot(fps(j,i_picks(j)), tp1s(j,i_picks(j)),'s', 'Markersize', 15);
+    plot(fat_fps(j,fat_i_picks(j)), fat_tp1s(j,fat_i_picks(j)),'s', 'Markersize', 15);
+    plot(tall_fps(j,tall_i_picks(j)), tall_tp1s(j,tall_i_picks(j)),'s', 'Markersize', 15);
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
     hold on;
-    plot(fpmean(j,:), tpmean(j,:),'.', 'Markersize', 10);
+    plot(fps(j,:), tp2s(j,:),'.', 'Markersize', 10);
+    plot(fat_fps(j,:), fat_tp2s(j,:),'.', 'Markersize', 10);
+    plot(tall_fps(j,:), tall_tp2s(j,:),'.', 'Markersize', 10);
     xx=0:0.01:1;
     plot(xx,xx);
     xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigma));
     title('ROC (general fp, correct (t,R))');
-    plot(fp_show(j), tp_show(j),'s', 'Markersize', 15) % desired tao
-end
-
-
-figure;
-k=1;
-for j=1:length(ps)
-    ax = subplot(length(ps),1,j);
+    
+    % desired tao
+    plot(fps(j,i_picks(j)), tp2s(j,i_picks(j)),'s', 'Markersize', 15);
+    plot(fat_fps(j,fat_i_picks(j)), fat_tp2s(j,fat_i_picks(j)),'s', 'Markersize', 15);
+    plot(tall_fps(j,tall_i_picks(j)), tall_tp2s(j,tall_i_picks(j)),'s', 'Markersize', 15);
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
     hold on;
-    plot(fpmean(j,:), dmean(j,:),'.', 'Markersize', 10);
+    plot(fps(j,:), tp3s(j,:),'.', 'Markersize', 10);
+    plot(fat_fps(j,:), fat_tp3s(j,:),'.', 'Markersize', 10);
+    plot(tall_fps(j,:), tall_tp3s(j,:),'.', 'Markersize', 10);
     xx=0:0.01:1;
     plot(xx,xx);
     xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigma));
     title('ROC (general fp, correct t)');
-    plot(fp_show(j), d_show(j),'s', 'Markersize', 15) % desired tao
+    
+    % desired tao
+    plot(fps(j,i_picks(j)), tp3s(j,i_picks(j)),'s', 'Markersize', 15);
+    plot(fat_fps(j,fat_i_picks(j)), fat_tp3s(j,fat_i_picks(j)),'s', 'Markersize', 15);
+    plot(tall_fps(j,tall_i_picks(j)), tall_tp3s(j,tall_i_picks(j)),'s', 'Markersize', 15);
+    k=k+1;
+end
+legend('overall','fat','tall');
+
+for j=1:length(ps)
+    fprintf('When p=%d q=%d sigma=%.2f:\n', ps(j),qs(j),sigma);
+    fprintf('optimal threshold for overall molecule: tao=%f\n', taos(i_picks(j)));
+    fprintf('optimal threshold for fat molecule: tao=%f\n', taos(fat_i_picks(j)));
+    fprintf('optimal threshold for tall molecule: tao=%f\n', taos(tall_i_picks(j)));
 end
 
+% figure;
+% 
+% for j=1:length(ps)
+%     ax = subplot(length(ps),1,j);
+%     hold on;
+%     plot(fps(j,:), tp2s(j,:),'.', 'Markersize', 10);
+%     plot(fat_fps(j,:), fat_tp2s(j,:),'.', 'Markersize', 10);
+%     plot(tall_fps(j,:), tall_tp2s(j,:),'.', 'Markersize', 10);
+%     xx=0:0.01:1;
+%     plot(xx,xx);
+%     xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigma));
+%     title('ROC (general fp, correct (t,R))');
+%     
+%     % desired tao
+%     plot(fps(j,i_picks(j)), tp2s(j,i_picks(j)),'s', 'Markersize', 15);
+%     plot(fat_fps(j,fat_i_picks(j)), fat_tp2s(j,fat_i_picks(j)),'s', 'Markersize', 15);
+%     plot(tall_fps(j,tall_i_picks(j)), tall_tp2s(j,tall_i_picks(j)),'s', 'Markersize', 15);
+% end
+% legend('overall','fat','tall');
+% 
+% figure;
+% 
+% for j=1:length(ps)
+%     ax = subplot(length(ps),1,j);
+%     hold on;
+%     plot(fps(j,:), tp3s(j,:),'.', 'Markersize', 10);
+%     plot(fat_fps(j,:), fat_tp3s(j,:),'.', 'Markersize', 10);
+%     plot(tall_fps(j,:), tall_tp3s(j,:),'.', 'Markersize', 10);
+%     xx=0:0.01:1;
+%     plot(xx,xx);
+%     xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigma));
+%     title('ROC (general fp, correct t)');
+%     
+%     % desired tao
+%     plot(fps(j,i_picks(j)), tp3s(j,i_picks(j)),'s', 'Markersize', 15);
+%     plot(fat_fps(j,fat_i_picks(j)), fat_tp3s(j,fat_i_picks(j)),'s', 'Markersize', 15);
+%     plot(tall_fps(j,tall_i_picks(j)), tall_tp3s(j,tall_i_picks(j)),'s', 'Markersize', 15);
+% end
+% legend('overall','fat','tall');
+% 
