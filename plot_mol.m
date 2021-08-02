@@ -10,9 +10,9 @@ qs = [4]; %2; %1 %molecule width
 for j=1:length(ps) % different ratios
     p = ps(j);
     q = qs(j);
-    for seed=[0 1] % different seeds
+    for seed=[0] % different seeds
       mol = molecule(p,q,seed); %random molecule in 2D
-        % figure;imagesc(mol);title('molecule');colorbar; colormap(jet(256)); % visualize molecule
+        figure;imagesc(mol);title('molecule');colorbar; colormap(jet(256)); % visualize molecule
         
         %construct a_{t,R} based on mol
         A = template(mol,N);

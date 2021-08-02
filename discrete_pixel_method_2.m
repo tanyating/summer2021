@@ -36,45 +36,45 @@ for j=1:length(ps) % iterate thru different ratios
     Nc = (N-p+1)*4; % number of configurations (signal)
     Nt = N-p+1; % number of translations
     
+    mol = molecule(p,q,seed); %random molecule in 2D
+    
+    %construct a_{t,R} based on mol
+    A = template(mol,N);
+    
+    
+    cov = sigma^2.*eye(N);
+    
+    M = 2000; % number of random examples
+    p_0 = 0.5; % prior prob for noise (no signal)
+    [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
+    tl_pairs = inverse_map(tl_class);
+    
 
     for i=1:length(taos) % iterate thru different norms (normalize or not)
         
-            mol = molecule(p,q,seed); %random molecule in 2D
-            tao = taos(i); % threshold
-            
-            
-            %construct a_{t,R} based on mol
-            A = template(mol,N);
-            
-            
-            cov = sigma^2.*eye(N);
-            
-            M = 2000; % number of random examples
-            p_0 = 0.5; % prior prob for noise (no signal)
-            [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
-            tl_pairs = inverse_map(tl_class);
-            
-            % predict labels by maximizing <ahat, yhat> with threshold
-            pl_class = detect_max(y,A,@(y,a)d2(y,a),tao);
-            pl_pairs = inverse_map(pl_class);
-            
-            fps(j,i) = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % fp rate
-            fat_fps(j,i) = sum(tl_class==0 & (pl_pairs(:,2)==1 | pl_pairs(:,2)==3))/sum(tl_class==0); % fat fp rate
-            tall_fps(j,i) = sum(tl_class==0 & (pl_pairs(:,2)==2 | pl_pairs(:,2)==4))/sum(tl_class==0); % tall fp rate
-            
-            
-            tp1s(j,i) = sum(tl_class>0 & pl_class>0)/sum(tl_class>0); % overall tp rate
-            fat_tp1s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & pl_class>0)/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat tp rate
-            tall_tp1s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & pl_class>0)/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall tp rate
-            
-            tp2s(j,i) = sum(tl_class>0 & (pl_class==tl_class))/sum(tl_class>0); % correct (t,R) rate
-            fat_tp2s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_class==tl_class))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
-            tall_tp2s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_class==tl_class))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
-            
-            tp3s(j,i) = sum(tl_class>0 & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_class>0); % correct t rate
-            fat_tp3s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
-            tall_tp3s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
-            
+        tao = taos(i); % threshold
+        
+        % predict labels by maximizing <ahat, yhat> with threshold
+        pl_class = detect_max(y,A,@(y,a)d2(y,a),tao);
+        pl_pairs = inverse_map(pl_class);
+        
+        fps(j,i) = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % fp rate
+        fat_fps(j,i) = sum(tl_class==0 & (pl_pairs(:,2)==1 | pl_pairs(:,2)==3))/sum(tl_class==0); % fat fp rate
+        tall_fps(j,i) = sum(tl_class==0 & (pl_pairs(:,2)==2 | pl_pairs(:,2)==4))/sum(tl_class==0); % tall fp rate
+        
+        
+        tp1s(j,i) = sum(tl_class>0 & pl_class>0)/sum(tl_class>0); % overall tp rate
+        fat_tp1s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & pl_class>0)/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat tp rate
+        tall_tp1s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & pl_class>0)/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall tp rate
+        
+        tp2s(j,i) = sum(tl_class>0 & (pl_class==tl_class))/sum(tl_class>0); % correct (t,R) rate
+        fat_tp2s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_class==tl_class))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
+        tall_tp2s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_class==tl_class))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
+        
+        tp3s(j,i) = sum(tl_class>0 & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_class>0); % correct t rate
+        fat_tp3s(j,i) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
+        tall_tp3s(j,i) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
+        
 
 
     end
@@ -204,9 +204,9 @@ legend('overall','fat','tall');
 
 for j=1:length(ps)
     fprintf('When p=%d q=%d sigma=%.2f:\n', ps(j),qs(j),sigma);
-    fprintf('optimal threshold for overall molecule: tao=%f\n', taos(i_picks(j)));
-    fprintf('optimal threshold for fat molecule: tao=%f\n', taos(fat_i_picks(j)));
-    fprintf('optimal threshold for tall molecule: tao=%f\n', taos(tall_i_picks(j)));
+    fprintf('optimal threshold for overall molecule: tao=%.2f\n', taos(i_picks(j)));
+    fprintf('optimal threshold for fat molecule: tao=%.2f\n', taos(fat_i_picks(j)));
+    fprintf('optimal threshold for tall molecule: tao=%.2f\n', taos(tall_i_picks(j)));
 end
 
 % figure;

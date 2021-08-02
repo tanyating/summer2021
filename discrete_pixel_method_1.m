@@ -1,17 +1,17 @@
 clear
 addpath('utils','dp');
 
-seed = 1; % 0;   % rand seed generator
+seed = 0;   % rand seed generator
 rng(seed);
 
 sigmas = 0.01:0.01:2; %0.1:0.1:10; %noise levels
 sigma_show = 0.3; % noise level to plot data
 sigma_error =1.0; % noise level to show error matrix
 
-N = 24; %N grids = # pixels in 1D
-ps = [4,8];%[10,8,7,4,9];
-qs = [4,2];%[2,2,3,4,3];
-norms = [1,0]; % 0 or 1 to decide normalize the mol or not
+N = 48; %N grids = # pixels in 1D
+ps = [8,16];%[10,8,7,4,9];
+qs = [8,4];%[2,2,3,4,3];
+norms = [1]; % 0 or 1 to decide normalize the mol or not
 % norms = [1];%[1,2,3]     % three diff ways to normalize: l1,l2,linfty.
 
 k=1;
@@ -27,13 +27,6 @@ for j=1:length(ps) % iterate thru different ratios
         
         mol = molecule(p,q,seed,norms(i)); %random molecule in 2D
 
-        % normalize molecule - currently this just scales the whole mol
-%         if (i==3)        % *** but need to fix for row or col norm?
-%             mol = mol./norm(mol,inf);
-%         else
-%             mol = mol./norm(mol,i);
-%         end
-
         %construct a_{t,R} based on mol
         A = template(mol,N); 
 
@@ -41,9 +34,10 @@ for j=1:length(ps) % iterate thru different ratios
             sigma = sigmas(l);
             cov = sigma^2.*eye(N);
 
-            M = 2000; % number of random examples
+            M = 5000; % number of random examples
             p_0 = 0.5; % prior prob for noise (no signal)
             [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
+            tl_pairs = inverse_map(tl_class);
 
 %             if (abs(sigma-sigma_show)<1e-14) 
 %                 plot_data_sig(y,A,tl_class); % plot y with clean signals
@@ -51,12 +45,25 @@ for j=1:length(ps) % iterate thru different ratios
 
             % predict labels by minimizing distance (norm)
             pl_class = detect_max(y,A,@(y,a)-d1(y,a));
+            pl_pairs = inverse_map(pl_class);
 
-            fp = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % false positive rate
-            fn = sum(tl_class>0 & pl_class==0)/sum(tl_class>0); % false negative rate
+            fps(k, l) = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % false positive rate
+            fat_fps(k,l) = sum(tl_class==0 & (pl_pairs(:,2)==1 | pl_pairs(:,2)==3))/sum(tl_class==0); % fat fp rate
+            tall_fps(k,l) = sum(tl_class==0 & (pl_pairs(:,2)==2 | pl_pairs(:,2)==4))/sum(tl_class==0); % tall fp rate
+%             fns(k, l) = sum(tl_class>0 & pl_class==0)/sum(tl_class>0); % false negative rate
 
-            fps(k, l) = fp;
-            fns(k, l) = fn;
+            
+            tp1s(k,l) = sum(tl_class>0 & pl_class>0)/sum(tl_class>0); % overall tp rate
+            fat_tp1s(k,l) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & pl_class>0)/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat tp rate
+            tall_tp1s(k,l) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & pl_class>0)/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall tp rate
+            
+            tp2s(k,l) = sum(tl_class>0 & (pl_class==tl_class))/sum(tl_class>0); % correct (t,R) rate
+            fat_tp2s(k,l) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_class==tl_class))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
+            tall_tp2s(k,l) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_class==tl_class))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
+            
+            tp3s(k,l) = sum(tl_class>0 & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_class>0); % correct t rate
+            fat_tp3s(k,l) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
+            tall_tp3s(k,l) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
 
 %             image_show = abs(sigma-sigma_error)<1e-14;
             image_show = 0;
@@ -113,7 +120,7 @@ for j=1:length(ps)
         plot(ax, sigmas, fps(k,:), '.', 'Markersize', 10);
         
         % plot fn
-        plot(ax, sigmas, fns(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, 1-tp1s(k,:), '.', 'Markersize', 10);
         xlabel('\sigma');
 %         legend('LB for fp','UB for fp','actual fp','actual fn');
         % vline(sigma_show,'k:','sigma shown in fig.1');
@@ -125,24 +132,22 @@ end
 legend('actual fp','actual fn');
 
 
-figure;
-k=1;
-for j=1:length(ps)
-    for i=1:length(norms)
-        ax = subplot(length(ps),length(norms),k);
-        hold on;
-        plot(ax, sigmas, cs(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, ds(k,:), '.', 'Markersize', 10);
-        xlabel('\sigma');
-        
-        title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
-        k=k+1;
-    end    
-end
-sgtitle('true rates');
-
-legend('c: tn for noise','d: tp per t for mol');
-
+% figure;
+% k=1;
+% for j=1:length(ps)
+%     for i=1:length(norms)
+%         ax = subplot(length(ps),length(norms),k);
+%         hold on;
+%         plot(ax, sigmas, cs(k,:), '.', 'Markersize', 10);
+%         plot(ax, sigmas, ds(k,:), '.', 'Markersize', 10);
+%         xlabel('\sigma');
+%         
+%         title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
+%         k=k+1;
+%     end    
+% end
+% sgtitle('true rates');
+% legend('c: tn for noise','d: tp per t for mol');
 
 figure;
 k=1;
@@ -150,19 +155,39 @@ for j=1:length(ps)
     for i=1:length(norms)
         ax = subplot(length(ps),length(norms),k);
         hold on;
-        plot(ax, sigmas, as(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, h1s(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, h2s(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, h3s(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, h4s(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, fps(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, fat_fps(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, tall_fps(k,:), '.', 'Markersize', 10);
+%         plot(ax, sigmas, h3s(k,:), '.', 'Markersize', 10);
+%         plot(ax, sigmas, h4s(k,:), '.', 'Markersize', 10);
         xlabel('\sigma');
         
         title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
         k=k+1;
     end
 end
-sgtitle('false positive rates (molecule vs. noise)');
-legend('a: avg fp per t (noise)', 'h1: avg fp per t when R=1', 'h2: avg fp per t when R=2', 'h3: avg fp per t when R=3', 'h4: avg fp per t when R=4');
+sgtitle('False positive rates (molecule vs. noise)');
+legend('overall', 'fat', 'tall');
+
+% figure;
+% k=1;
+% for j=1:length(ps)
+%     for i=1:length(norms)
+%         ax = subplot(length(ps),length(norms),k);
+%         hold on;
+%         plot(ax, sigmas, as(k,:), '.', 'Markersize', 10);
+%         plot(ax, sigmas, (h1s(k,:)+h3s(k,:)), '.', 'Markersize', 10);
+%         plot(ax, sigmas, (h2s(k,:)+h4s(k,:)), '.', 'Markersize', 10);
+% %         plot(ax, sigmas, h3s(k,:), '.', 'Markersize', 10);
+% %         plot(ax, sigmas, h4s(k,:), '.', 'Markersize', 10);
+%         xlabel('\sigma');
+%         
+%         title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
+%         k=k+1;
+%     end
+% end
+% sgtitle('avg false positive rates per t (molecule vs. noise)');
+% legend('a: overall', 'h1+h3: fat', 'h2+h4: tall');
 
 figure;
 k=1;
@@ -171,18 +196,19 @@ for j=1:length(ps)
         ax = subplot(length(ps),length(norms),k);
         hold on;
         plot(ax, sigmas, bs(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, o1s(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, o2s(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, o3s(k,:), '.', 'Markersize', 10);
-        plot(ax, sigmas, o4s(k,:), '.', 'Markersize', 10);
+        plot(ax, sigmas, (o1s(k,:)+o3s(k,:))./2, '.', 'Markersize', 10);
+        plot(ax, sigmas, (o2s(k,:)+o4s(k,:))./2, '.', 'Markersize', 10);
+%         plot(ax, sigmas, o3s(k,:), '.', 'Markersize', 10);
+%         plot(ax, sigmas, o4s(k,:), '.', 'Markersize', 10);
         xlabel('\sigma');
         
         title(sprintf('p=%d q=%d norm=%d', ps(j),qs(j),norms(i)));
         k=k+1;
     end
 end
-sgtitle('false negative rates (molecule vs. noise)');
-legend('b: fn per t (noise)', 'o1: fn per t when R=1', 'o2: fn per t when R=2', 'o3: fn per t when R=3', 'o4: fn per t when R=4');
+sgtitle('False negative rates (molecule vs. noise)');
+legend('overall', 'fat', 'tall');
+% legend('b: overall', 'mean(o1,o3): fat', 'mean(o2,o4): tall');
 
 
 figure;
@@ -203,3 +229,43 @@ for j=1:length(ps)
 end
 sgtitle('mis-classifying rates (mol vs. mol)');
 legend('e: avg overlapping mis-class rate per t', 'F: general non-overlapping mis-class rate per t', 'g: avg true t, wrong R rate per t');
+
+
+figure;
+k=1;
+for j=1:length(ps)
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(fps(j,end), tp1s(j,end),'.', 'Markersize', 10);
+    plot(fat_fps(j,end), fat_tp1s(j,end),'.', 'Markersize', 10);
+    plot(tall_fps(j,end), tall_tp1s(j,end),'.', 'Markersize', 10);
+    xx=0:0.01:1;
+    plot(xx,xx);
+    xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigmas(end)));
+    title('ROC (general fp, general tp)');
+    
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(fps(j,end), tp2s(j,end),'.', 'Markersize', 10);
+    plot(fat_fps(j,end), fat_tp2s(j,end),'.', 'Markersize', 10);
+    plot(tall_fps(j,end), tall_tp2s(j,end),'.', 'Markersize', 10);
+    xx=0:0.01:1;
+    plot(xx,xx);
+    xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigmas(end)));
+    title('ROC (general fp, correct (t,R))');
+    k=k+1;
+    
+    ax = subplot(length(ps),3,k);
+    hold on;
+    plot(fps(j,end), tp3s(j,end),'.', 'Markersize', 10);
+    plot(fat_fps(j,end), fat_tp3s(j,end),'.', 'Markersize', 10);
+    plot(tall_fps(j,end), tall_tp3s(j,end),'.', 'Markersize', 10);
+    xx=0:0.01:1;
+    plot(xx,xx);
+    xlabel(sprintf('p=%d q=%d sigma=%.2f', ps(j),qs(j),sigmas(end)));
+    title('ROC (general fp, correct t)');
+    k=k+1;
+end
+legend('overall','fat','tall');

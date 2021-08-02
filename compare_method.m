@@ -1,16 +1,16 @@
 clear
 addpath('utils','dp');
 
-sigma = 1;
-seeds = 0:100;
+sigma = 2;
+seeds = 0:0;
 
-N = 24; %N grids = # pixels in 1D
-p = 8;%[10,8,7,4,9];
-q = 2;%[2,2,3,4,3];
+N = 48; %N grids = # pixels in 1D
+p = 16;%[10,8,7,4,9];
+q = 4;%[2,2,3,4,3];
 Nc = (N-p+1)*4; % number of configurations (signal)
 Nt = N-p+1; % number of translations
 
-tao = 0.51; % threshold for method 2
+tao = 0.44; % threshold for method 2
 
 k=1;
 for j=1:2 % iterate thru different methods
@@ -43,10 +43,6 @@ for j=1:2 % iterate thru different methods
         M = 2000; % number of random examples
         p_0 = 0.5; % prior prob for noise (no signal)
         [y,tl_class] = randdata(M,A,sigma,p_0); % generate y and true labels
-        
-        %             if (abs(sigma-sigma_show)<1e-14)
-        %                 plot_data_sig(y,A,tl_class); % plot y with clean signals
-        %             end
         
         % predict labels by minimizing distance (norm)
         if (j==1)
@@ -139,14 +135,12 @@ legend('tn','fp');
 
 figure;
 hold on;
-rot_bar = zeros(2,4);
-rot_bar(:,1) = h1mean;
-rot_bar(:,2) = h2mean;
-rot_bar(:,3) = h3mean;
-rot_bar(:,4) = h4mean;
+rot_bar = zeros(2,2);
+rot_bar(:,1) = h1mean+h3mean;
+rot_bar(:,2) = h2mean+h4mean;
 rot_bar = rot_bar./sum(rot_bar,2); % normalize over the 4 fps (sum to 1)
 bar(1:2,rot_bar,'stacked');
 xticks(1:2);
 xticklabels(names);
-legend('R=1','R=2','R=3','R=4');
-title('False Positive rate per rotation')
+legend('fat', 'tall');
+title('False Positive rate per orientation')

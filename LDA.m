@@ -20,9 +20,9 @@ addpath('utils')   % include local stuff incl stats/ML toolbox copies
 
 a = [5,3]; %signal   (note it's at a generic angle, tests more than (5,5) does)
 sigmas = 1:0.5:20; %noise
-sigma_show = 3.0;    % must be exactly in the above list
+sigma_show = 1;    % must be exactly in the above list
 d = length(a); %dimension
-p_0 = 0.8; %prior belief in no signal = its incoming rate = pi_1 in notes
+p_0 = 0.5; %prior belief in no signal = its incoming rate = pi_1 in notes
 p_a = 1-p_0; %prior belief in signal = also its incoming rate = pi_2 in notes
 
 fps = zeros(size(sigmas));
