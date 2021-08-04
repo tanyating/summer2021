@@ -1,0 +1,102 @@
+1. Presentation
+
+p.3: N=3 template plot: label a couple of the pts with (t,R) values.
+N=3 means only 3 pixels in the detector!
+
+results for meth1 should say meth1.
+
+mol -> molecule
+
+p.9: meth2 explain better:
+     1) define hat operator: given v,  v_0 := v - 1.v_m = zero-mean part of v.
+                                    hatv = v_0 / ||v_0||
+        "Hat" takes zero-mean part, scaled to l2-norm 1.
+     2) replace name d_2 by c = cos(theta) where theta is ang btw zero-mean
+        parts of the vectors.
+        Ie cross-correlation c(x,y) = (x,y) / ||x|| ||y||  \in [-1,1]
+        We're doing c(a_0, y_0), where v_0 means subtract the mean cmpt of v.
+
+p.14 "Actual" molecule -> test with molecule present?
+"True molecule"?
+miss of -> missed
+
+Do the scatter plot from below for mtg if poss.
+
+move p.15 to after other ROC.
+
+Adapt p.13 to be final slide Conclusions:
+* quote only 2 digits. Condense conclusion statements into few lines.
+* add concl about TP.
+* knowing TP rate for different R's enables interpretation of
+  detection rates in images (what fraction missed?)
+* for 4x1 aspect molecule, TP ratio for meth2 is 1.6 (whatever)
+* we have theory for why tall FPR < fat FPR, in expectation for random mol.
+
+Future plans at bottom of Concl slide?
+
+Qu's for Niko: zero-mean is useful model?
+Do they throw away the mean part because don't trust it?
+
+
+
+
+2 Research
+
+2A. theory for meth1
+
+  - check integral vs Manas.
+  - check theory EFRP prediction: is for one translation test.
+   compare avg over mols of experimental FPR for meth1 for a *single* (t,R).
+   (otherwise we're doing in the current meth1 implementation, repeated tests
+   and taking the best over all of them, not what the theory refers to!)
+   Note a possible other useful variant of meth1 closer to Niko does is
+   to allow a mol to be detected or not detected at *each* translation.
+
+  - apply Laplace's method (Gaussian approx, ie upsidedown parabola
+  approx for log of the integrand, read off max and the curvature at
+  the max), for asymptotics in p,q, possibly sigma, for the EFPR 1D
+  integral.
+
+
+2B. experiments
+
+i) are the nearly-1 TP rates in ROC on p.8 due to it finding a FP mol in
+a wrong location, uncorrelated to the true (t,R).
+0.6 of the time it's finding the correct t; the rest of the 0.4 of the
+time it's the FPR causing a detection in some random place - check if so.
+
+The FR rate of 1 we see now is bad (picking the max of multiple pixels
+each of which has a FPR).
+
+Eg plot scatter of true vs found t values: should be diagonal density,
+plus uniform bar over the found-t axis (eg vertical).
+
+ii) make a meth1 variant (meth1a): has threshold (interpret as a prior of being
+a mol at each (t,R)). May vary by orientation. Will certainly vary by p,q,N,
+sigma? 
+
+Having multiple molecules in the field of view:
+This entails new logic in the classifier tests.
+sparse matrix (matlab can handle) size Ntests * Nc with entries 0 or 1.
+Would allow meas of FPR per pixel (t).
+Could allow taking of single local max over t values to allow variation
+in translation.
+
+meth1 takes into acct the norm ||a||_2, gets slightly higher TP rate than
+meth2. WOuld be nice if meth1 preserved DC part.
+(DC = direct current = zero-frequency = mean of a signal).
+
+Niko's MATLAB nm(v) computes v_0 = v - cptwise mean, then returns
+v_0 scaled to have variance = 1 per pixel, ie l2 norm of sqrt(N)
+for N pixels.
+Applies to the image (signal).
+For each template, doesn't use nm(),
+but subtracts mean, and also manually normalizes to variance 1
+across the whole image.
+So, their values of inner-prod will be N times bigger than ours.
+
+Current test of FPR is using all (t,R)'s.
+But really we want to measure FPR-per-translation : could be measured
+by sending in noise vectors to a detector for only t=central, and all R's.
+
+

@@ -3,8 +3,11 @@ addpath('utils','dp');
 
 p=8;
 q=32; % length (number of nonzero entries on N pixels)
+%p=32; q=8;
 sigma=5;
 f = @(xx)(exp(-xx.^2/(2.*p)).*erf(xx/(2*sqrt(2)*sigma)).*xx.^(q-1));
+fc = @(xx)(exp(-xx.^2/(2.*p)).*erfc(xx/(2*sqrt(2)*sigma)).*xx.^(q-1));
+f1 = @(xx)(exp(-xx.^2/(2.*p)).*xx.^(q-1));
 
 
 A(1) = 0;
@@ -15,6 +18,16 @@ for i=4:q+1
 end
 
 efpr = 1/2 - 1/2*A(q+1)*1/(sqrt(2*pi*p).^q)*integral(f,0,inf)
+
+efpr_manas = 1/2*A(q+1)*1/(sqrt(2*pi*p).^q)*integral(fc,0,inf)
+
+one = A(q+1)*1/(sqrt(2*pi*p).^q)*integral(f1,0,inf) % ????
+
+% to debug & compare to FPR avg for singel (t,R).
+
+
+
+
 
 %%% check for equal dist y1 for different R
 %         ds_cur = ds_cur.^2;
