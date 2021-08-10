@@ -54,23 +54,27 @@ for j=1:2 % iterate thru different methods
         
         pl_pairs = inverse_map(pl_class);
         
+        % FPRs
         fps(j) = sum(tl_class==0 & pl_class>0)/sum(tl_class==0); % false positive rate
         fat_fps(j) = sum(tl_class==0 & (pl_pairs(:,2)==1 | pl_pairs(:,2)==3))/sum(tl_class==0); % fat fp rate
         tall_fps(j) = sum(tl_class==0 & (pl_pairs(:,2)==2 | pl_pairs(:,2)==4))/sum(tl_class==0); % tall fp rate
         %             fns(k, l) = sum(tl_class>0 & pl_class==0)/sum(tl_class>0); % false negative rate
         
-        
+        % TPRs
         tp1s(j) = sum(tl_class>0 & pl_class>0)/sum(tl_class>0); % overall tp rate
         fat_tp1s(j) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & pl_class>0)/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat tp rate
         tall_tp1s(j) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & pl_class>0)/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall tp rate
         
+        % Correct (t,R) rates
         tp2s(j) = sum(tl_class>0 & (pl_class==tl_class))/sum(tl_class>0); % correct (t,R) rate
         fat_tp2s(j) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_class==tl_class))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
         tall_tp2s(j) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_class==tl_class))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
         
+        % Correct t rates
         tp3s(j) = sum(tl_class>0 & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_class>0); % correct t rate
         fat_tp3s(j) = sum((tl_pairs(:,2)==1 | tl_pairs(:,2)==3) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==1 | tl_pairs(:,2)==3); % fat correct (t,R)
         tall_tp3s(j) = sum((tl_pairs(:,2)==2 | tl_pairs(:,2)==4) & (pl_pairs(:,1)==tl_pairs(:,1)))/sum(tl_pairs(:,2)==2 | tl_pairs(:,2)==4); % tall correct (t,R)
+        
         
         %             image_show = abs(sigma-sigma_error)<1e-14;
         image_show = 0;
@@ -85,10 +89,10 @@ for j=1:2 % iterate thru different methods
         h3s(j) = h3; % avg fp when R=3
         h4s(j) = h4; % avg fp when R=4
         rs(j) = r; % avg correct (t,R)
-%         o1s(j, i) = o1; % approx fn when R=1
-%         o2s(j, i) = o2; % approx fn when R=2
-%         o3s(j, i) = o3; % approx fn when R=3
-%         o4s(j, i) = o4; % approx fn when R=4
+        o1s(j) = o1; % approx fn when R=1
+        o2s(j) = o2; % approx fn when R=2
+        o3s(j) = o3; % approx fn when R=3
+        o4s(j) = o4; % approx fn when R=4
         
         %         Ct = error_matrix(get_tr(tl_class),get_tr(pl_class),Nt,image_show); % error matrix for translation t
         Ct_red = error_matrix_red(get_tr(tl_class),get_tr(pl_class),Nt,Nt,image_show); % error matrix for t
@@ -118,14 +122,14 @@ for j=1:2 % iterate thru different methods
 end
 
 
-
+%% true molecule
 figure;
 hold on;
 mol_bar = zeros(2,4);
-mol_bar(:,1) = rs;
-mol_bar(:,2) = ds-rs;
-mol_bar(:,3) = 1-ds-bs;
-mol_bar(:,4) = bs;
+mol_bar(:,1) = tp2s; %rs;
+mol_bar(:,2) = tp3s-tp2s; %ds-rs;
+mol_bar(:,3) = 1-tp3s-(1-tp1s); %1-ds-bs
+mol_bar(:,4) = 1-tp1s; %bs
 bar(1:2,mol_bar,'stacked');
 names = strings(2);
 for i=1:2
@@ -137,6 +141,7 @@ ylim([0 inf]);
 title('actual mol');
 legend('correct (t,R)', 'correct t, wrong R','wrong t', 'fn');
 
+%% true noise (fp vs tn)
 figure;
 hold on;
 noise_bar = zeros(2,2);
@@ -148,6 +153,7 @@ xticklabels(names);
 title('actual noise');
 legend('tn','fp');
 
+%% FPR per orientation
 figure;
 hold on;
 rot_bar = zeros(2,2);
@@ -160,19 +166,42 @@ xticklabels(names);
 legend('fat', 'tall');
 title('False Positive rate per orientation');
 
+% % FPR ratio
+% figure;
+% hold on;
+% ratio_bar = zeros(2,1);
+% ratio_bar(:,1) = (h1s+h3s)./(h2s+h4s);
+% bar(1:2,ratio_bar,'stacked');
+% xticks(1:2);
+% xticklabels(names);
+% hline(1);
+% title('Ratio of fat FPR and tall FPR');
+
+%% tp per orientation
 figure;
 hold on;
-ratio_bar = zeros(2,1);
-ratio_bar(:,1) = (h1s+h3s)./(h2s+h4s);
-bar(1:2,ratio_bar,'stacked');
+rot_bar_tp2 = zeros(2,2);
+rot_bar_tp2(:,1) = fat_tp3s;
+rot_bar_tp2(:,2) = tall_tp3s;
+% rot_bar_fn = rot_bar_fn./sum(rot_bar_fn,2); % normalize over the 4 fps (sum to 1)
+bar(1:2,rot_bar_tp2,'stacked');
 xticks(1:2);
 xticklabels(names);
-hline(1);
-title('Ratio of fat FPR and tall FPR');
+legend('fat', 'tall');
+title('TPR per orientation');
 
+%% tp ratio
+% figure;
+% hold on;
+% ratio_bar_tp2 = zeros(2,1);
+% ratio_bar_tp2(:,1) = fat_tp3s./tall_tp3s;
+% bar(1:2,ratio_bar_tp2,'stacked');
+% xticks(1:2);
+% xticklabels(names);
+% hline(1);
+% title('Ratio of fat TPR and tall TPR');
 
-
-
+%% ROC curves
 figure;
 k=1;
 % for j=1:2
@@ -201,6 +230,26 @@ ax = subplot(1,3,k);
 hold on;
 
 j=1;
+plot(fps(j), tp3s(j),'b.', 'Markersize', 10);
+plot(fat_fps(j), fat_tp3s(j),'r.', 'Markersize', 10);
+plot(tall_fps(j), tall_tp3s(j),'g.', 'Markersize', 10);
+j=2;
+plot(fps(j), tp3s(j),'b+', 'Markersize', 10);
+plot(fat_fps(j), fat_tp3s(j),'r+', 'Markersize', 10);
+plot(tall_fps(j), tall_tp3s(j),'g+', 'Markersize', 10);
+
+xx=0:0.01:1;
+plot(xx,xx);
+xlabel('general fp');
+ylabel('correct t');
+% xlabel(sprintf('p=%d q=%d sigma=%.2f', p,q,sigma));
+% title('ROC (general fp, correct t)');
+k=k+1;
+
+ax = subplot(1,3,k);
+hold on;
+
+j=1;
 plot(fps(j), tp2s(j),'b.', 'Markersize', 10);
 plot(fat_fps(j), fat_tp2s(j),'r.', 'Markersize', 10);
 plot(tall_fps(j), tall_tp2s(j),'g.', 'Markersize', 10);
@@ -217,25 +266,6 @@ ylabel('correct (t,R)');
 % title('ROC (general fp, correct (t,R))');
 k=k+1;
 
-ax = subplot(1,3,k);
-hold on;
-
-j=1;
-plot(fps(j), tp3s(j),'b.', 'Markersize', 10);
-plot(fat_fps(j), fat_tp3s(j),'r.', 'Markersize', 10);
-plot(tall_fps(j), tall_tp3s(j),'g.', 'Markersize', 10);
-j=2;
-plot(fps(j), tp3s(j),'b+', 'Markersize', 10);
-plot(fat_fps(j), fat_tp3s(j),'r+', 'Markersize', 10);
-plot(tall_fps(j), tall_tp3s(j),'g+', 'Markersize', 10);
-
-xx=0:0.01:1;
-plot(xx,xx);
-xlabel('general fp');
-ylabel('correct t');
-% xlabel(sprintf('p=%d q=%d sigma=%.2f', p,q,sigma));
-% title('ROC (general fp, correct t)');
-k=k+1;
 % end
 legend('overall (method 1)','fat (method 1)','tall (method 1)','overall (method 2)','fat (method 2)','tall (method 2)');
 

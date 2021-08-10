@@ -1,31 +1,27 @@
 clear;
 addpath('utils','dp');
 
-p=8;
-q=32; % length (number of nonzero entries on N pixels)
+p=32;
+q=8; % length (number of nonzero entries on N pixels)
 %p=32; q=8;
 sigma=5;
 f = @(xx)(exp(-xx.^2/(2.*p)).*erf(xx/(2*sqrt(2)*sigma)).*xx.^(q-1));
 fc = @(xx)(exp(-xx.^2/(2.*p)).*erfc(xx/(2*sqrt(2)*sigma)).*xx.^(q-1));
 f1 = @(xx)(exp(-xx.^2/(2.*p)).*xx.^(q-1));
+f2 = @(xx)(exp(-xx.^2/(2.*p)).*(1/2-1/2.*erf(xx/(2*sqrt(2)*sigma))).*xx.^(q-1));
 
 
-A(1) = 0;
-A(2) = 2;
-A(3) = 2*pi;
-for i=4:q+1
-    A(i) = 2*pi/(i-2)*A(i-2);
-end
+S = @(n)(2.*pi.^(n/2)./gamma(n/2)); % unit sphere area
 
-efpr = 1/2 - 1/2*A(q+1)*1/(sqrt(2*pi*p).^q)*integral(f,0,inf)
+efpr = 1/2 - 1/2*S(q)*1/(sqrt(2*pi*p).^q)*integral(f,0,inf)
 
-efpr_manas = 1/2*A(q+1)*1/(sqrt(2*pi*p).^q)*integral(fc,0,inf)
+efpr_manas = 1/2*S(q)*1/(sqrt(2*pi*p).^q)*integral(fc,0,inf)
 
-one = A(q+1)*1/(sqrt(2*pi*p).^q)*integral(f1,0,inf) % ????
+% one = S(q)*1/(sqrt(2*pi*p).^q)*integral(f1,0,inf) % ????
+
+% efpr2 = S(q)*1/(sqrt(2*pi*p).^q)*integral(f2,0,inf)
 
 % to debug & compare to FPR avg for singel (t,R).
-
-
 
 
 
